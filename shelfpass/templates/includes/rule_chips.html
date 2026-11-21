@@ -1,0 +1,1 @@
+{% load shelfpass %}<div class="chips">{% for b in rules.badges %}<span class="chip {{ b.level }}" {% if b.detail %}title="{{ b.detail }}"{% endif %}>{% icon b.level|level_icon 15 %} {{ b.label }}</span>{% endfor %}</div>

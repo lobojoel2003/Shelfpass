@@ -1,0 +1,62 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}{{ person.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="hero">
+    <div class="avatar lg">{{ person.name|initials }}</div>
+    <div>
+      <div class="eyebrow">Reader {% if not person.active %}<span class="pill pill-muted">Inactive</span>{% endif %}</div>
+      <h1>{{ person.name }} <span class="muted mono" style="font-size:1.1rem">#{{ person.inmate_id }}</span></h1>
+      <p>{% if person.facility %}<a href="{{ person.facility.get_absolute_url }}">{{ person.facility.name }}</a> · {{ person.facility.city }}, {{ person.facility.state }}{% else %}No current facility{% endif %}{% if person.housing %} · {{ person.housing }}{% endif %}</p>
+    </div>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'correspondence:person_edit' person.pk %}">{% icon "edit" 16 %} Edit</a>
+    <a class="btn btn-accent" href="{% url 'correspondence:intake' %}?person={{ person.pk }}">{% icon "letter" 16 %} New letter</a>
+  </div>
+</div>
+<div class="split">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>Letters</h2><span class="small muted">{{ requests|length }}</span></div>
+      <div class="table-wrap"><table class="table">
+        <tbody>
+        {% for r in requests %}
+          <tr>
+            <td><a class="rowlink" href="{{ r.get_absolute_url }}">{{ r.reference }}</a><span class="sub">{{ r.facility.name }}</span></td>
+            <td>{{ r.item_count|pluralize_count:"item" }}</td>
+            <td>{% status_pill r.status r.get_status_display %}</td>
+            <td class="num">{{ r.received_on|date:"M j, Y" }}</td>
+          </tr>
+        {% empty %}<tr><td class="muted">No letters yet.</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+    <section class="card">
+      <div class="card-head"><h2>Packages</h2></div>
+      <div class="table-wrap"><table class="table">
+        <tbody>
+        {% for p in packages %}
+          <tr>
+            <td><a class="rowlink" href="{{ p.get_absolute_url }}">{{ p.reference }}</a><span class="sub">{{ p.facility.name }}</span></td>
+            <td>{% for i in p.items.all %}{{ i.title }}{% if not forloop.last %}; {% endif %}{% endfor %}</td>
+            <td>{% status_pill p.status p.get_status_display %}{% if p.return_record %}<span class="sub">{{ p.return_record.get_reason_display }}</span>{% endif %}</td>
+            <td class="num">{{ p.shipped_on|date:"M j, Y"|default:"—" }}</td>
+          </tr>
+        {% empty %}<tr><td class="muted">No packages yet.</td></tr>{% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+  </div>
+  <aside class="stack">
+    <section class="card">
+      <div class="card-head"><h3>{% icon "book" %} Books they've received</h3><span class="small muted">{{ history|length }}</span></div>
+      <div class="card-body">
+        {% if history %}<ul class="mini-list">{% for s in history %}<li><span>{{ s.title }}{% if s.authors %} <span class="muted small">· {{ s.authors }}</span>{% endif %}</span><span class="muted small">{{ s.shipped_on|date:"M Y"|default:s.package_status }}</span></li>{% endfor %}</ul>
+        {% else %}<p class="small muted" style="margin:0">Nothing sent yet.</p>{% endif %}
+      </div>
+    </section>
+    {% if person.notes %}<section class="card"><div class="card-body"><h3>Notes</h3><p style="white-space:pre-line;margin:0">{{ person.notes }}</p></div></section>{% endif %}
+  </aside>
+</div>
+{% endblock %}

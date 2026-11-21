@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Add a volunteer{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow"><a href="{% url 'orgs:team' %}">← Team</a></div><h1>Add a volunteer</h1><p>They'll be able to log in straight away with the temporary password.</p></div></div>
+<form method="post" class="card" style="max-width:760px">{% csrf_token %}
+  {% if form.non_field_errors %}<ul class="errorlist nonfield">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  <div class="card-body form-grid">
+    {% include "includes/field.html" with field=form.username %}
+    {% include "includes/field.html" with field=form.role %}
+    {% include "includes/field.html" with field=form.first_name %}
+    {% include "includes/field.html" with field=form.last_name %}
+    {% include "includes/field.html" with field=form.email %}
+    {% include "includes/field.html" with field=form.password %}
+  </div>
+  <div class="card-foot row-between"><a href="{% url 'orgs:team' %}">Cancel</a><button class="btn btn-primary" type="submit">Add volunteer</button></div>
+</form>
+{% endblock %}

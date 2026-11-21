@@ -1,0 +1,1 @@
+{% load shelfpass %}{% if issues %}<ul class="issues">{% for issue in issues %}<li class="issue {{ issue.level }}">{% icon issue.level|level_icon 17 %}<span>{{ issue.message }}</span></li>{% endfor %}</ul>{% endif %}

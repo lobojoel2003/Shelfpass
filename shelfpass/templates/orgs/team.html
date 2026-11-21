@@ -1,0 +1,28 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Team{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Team</h1><p>Volunteers who can see {{ current_org.name }}'s letters, people and shelf.</p></div>
+  {% if is_coordinator %}<div class="actions"><a class="btn btn-primary" href="{% url 'orgs:member_add' %}">{% icon "plus" 16 %} Add a volunteer</a></div>{% endif %}
+</div>
+<div class="card">
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Volunteer</th><th>Role</th><th class="num">Joined</th>{% if is_coordinator %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+    {% for m in members %}
+      <tr>
+        <td><div class="row" style="flex-wrap:nowrap"><div class="avatar">{{ m.user.get_full_name|default:m.user.username|initials }}</div><div><strong>{{ m.user.get_full_name|default:m.user.username }}</strong><span class="sub">{{ m.user.username }}{% if m.user.email %} · {{ m.user.email }}{% endif %}</span></div></div></td>
+        <td>{% if is_coordinator and m.user != user %}
+          <form class="inline-form" method="post" action="{% url 'orgs:member_role' m.pk %}">{% csrf_token %}
+            <select name="role" data-autosubmit aria-label="Role for {{ m.user.username }}">{% for v, l in roles %}<option value="{{ v }}" {% if v == m.role %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+          </form>
+          {% else %}<span class="pill {% if m.is_coordinator %}pill-brand{% else %}pill-muted{% endif %}">{{ m.get_role_display }}</span>{% endif %}</td>
+        <td class="num">{{ m.created_at|date:"M Y" }}</td>
+        {% if is_coordinator %}<td class="num">{% if m.user != user %}<form class="inline-form" method="post" action="{% url 'orgs:member_remove' m.pk %}" data-confirm="Remove {{ m.user.username }} from the group?">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">{% icon "x" 15 %} Remove</button></form>{% endif %}</td>{% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+<p class="small muted" style="margin-top:1rem">Coordinators can add volunteers and edit group settings. Everyone can log letters, pack and ship.</p>
+{% endblock %}

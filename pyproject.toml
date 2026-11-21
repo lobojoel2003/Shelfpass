@@ -1,0 +1,108 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shelfpass"
+dynamic = ["version"]
+description = "Request tracker for books-to-prisoners groups, with a shared, crowd-maintained dataset of prison mail rules."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Shelfpass contributors" }]
+keywords = ["books-to-prisoners", "prison", "mail-rules", "censorship", "django", "nonprofit"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Other Audience",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business",
+    "Topic :: Sociology",
+]
+dependencies = [
+    "Django>=5.2.8,<6.0",
+    "dj-database-url>=2.3",
+    "gunicorn>=23.0",
+    "jsonschema>=4.23",
+    "psycopg[binary]>=3.2",
+    "whitenoise>=6.8",
+]
+
+[project.urls]
+Homepage = "https://github.com/lobojoel2003/Shelfpass"
+Documentation = "https://github.com/lobojoel2003/Shelfpass#readme"
+Changelog = "https://github.com/lobojoel2003/Shelfpass/blob/main/CHANGELOG.md"
+Issues = "https://github.com/lobojoel2003/Shelfpass/issues"
+
+[dependency-groups]
+dev = [
+    "coverage[toml]>=7.6",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "pytest-django>=4.9",
+    "ruff>=0.8",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "shelfpass.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["shelfpass*"]
+
+[tool.setuptools.package-data]
+"*" = [
+    "templates/**/*",
+    "static/**/*",
+    "data/**/*",
+]
+
+# ---------------------------------------------------------------- pytest ---
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = ["error::RuntimeWarning"]
+
+# -------------------------------------------------------------- coverage ---
+
+[tool.coverage.run]
+source = ["shelfpass"]
+branch = true
+omit = ["*/migrations/*", "shelfpass/asgi.py", "shelfpass/wsgi.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
+# ------------------------------------------------------------------ ruff ---
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "DJ", "SIM", "C4", "RUF", "S", "PT"]
+ignore = [
+    "E501",   # line length is enforced by `ruff format`; long strings are fine
+    "RUF012", # Django class attributes (Meta.ordering etc.) are fine as plain lists
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "PT018"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["shelfpass"]

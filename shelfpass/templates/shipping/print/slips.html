@@ -1,0 +1,44 @@
+{% extends "shipping/print/base_print.html" %}
+{% block title %}Packing slip{% if pages|length > 1 %}s{% endif %}{% endblock %}
+{% block hint %}US Letter · one page per package{% endblock %}
+{% block sheets %}
+{% for p in pages %}
+{% if not batch %}
+<div class="checklist">
+  <h2>Packer's checklist for {{ p.package.facility.name }} (not printed)</h2>
+  <ul>
+    {% for b in p.rules.badges %}<li{% if b.level == 'block' %} class="block"{% endif %}>{{ b.label }}{% if b.detail %} — {{ b.detail }}{% endif %}</li>{% endfor %}
+    {% for n in p.rules.notes %}<li>{{ n }}</li>{% endfor %}
+    <li>Remove stickers, bookmarks and inserts. No writing in the books.</li>
+  </ul>
+</div>
+{% endif %}
+<section class="sheet slip">
+  <header class="slip-head">
+    <div>
+      <h1>{% if p.rules.invoice_required %}INVOICE / PACKING SLIP{% else %}PACKING SLIP{% endif %}</h1>
+      <div class="small">{{ p.org.name }}{% if p.org.website %} · {{ p.org.website }}{% endif %}</div>
+    </div>
+    <div class="meta"><strong>{{ p.package.reference }}</strong><br>Date: {{ p.package.shipped_on|default:p.today|date:"F j, Y" }}<br>Request {{ p.package.request.reference }}</div>
+  </header>
+  <div class="cols">
+    <div><div class="box-label">From</div><address>{% for line in p.org.sender_lines %}{{ line }}<br>{% endfor %}{% if p.org.contact_email %}{{ p.org.contact_email }}{% endif %}</address></div>
+    <div><div class="box-label">Ship to</div><address><strong>{{ p.recipient_line }}</strong><br>{% for line in p.address_lines %}{{ line }}<br>{% endfor %}</address></div>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Title</th><th>Author</th><th>ISBN</th><th>Binding</th><th>Condition</th><th class="num">Qty</th>{% if p.rules.invoice_required %}<th class="num">Price</th>{% endif %}</tr></thead>
+    <tbody>
+      {% for i in p.items %}
+      <tr><td>{{ forloop.counter }}</td><td>{{ i.title }}</td><td>{{ i.authors|default:"—" }}</td><td class="mono">{{ i.isbn|default:"—" }}</td><td>{{ i.get_format_display }}</td><td>{{ i.get_condition_display }}</td><td class="num">1</td>{% if p.rules.invoice_required %}<td class="num">$0.00</td>{% endif %}</tr>
+      {% endfor %}
+    </tbody>
+    <tfoot><tr><td colspan="6">Total items</td><td class="num">{{ p.items|length }}</td>{% if p.rules.invoice_required %}<td class="num">$0.00</td>{% endif %}</tr></tfoot>
+  </table>
+  <div class="note">
+    <strong>Contents:</strong> {{ p.items|length }} book{{ p.items|length|pluralize }}{% if p.rules.new_only %}, all new{% endif %}{% if p.rules.paperback_only %}, all paperback{% endif %}. {% if p.rules.invoice_required %}Paid in full — donated at no cost to the recipient. {% endif %}
+    {{ p.org.packing_slip_note }}
+  </div>
+  <p class="small" style="margin-top:.3in">Questions about this package? Please contact {{ p.org.name }}{% if p.org.contact_email %} at {{ p.org.contact_email }}{% endif %} and quote {{ p.package.reference }}.</p>
+</section>
+{% endfor %}
+{% endblock %}

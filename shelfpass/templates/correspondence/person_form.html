@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ person.name }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow"><a href="{{ person.get_absolute_url }}">← {{ person.name }}</a></div><h1>Edit reader</h1></div></div>
+<form method="post" class="card" style="max-width:760px">{% csrf_token %}
+  <div class="card-body form-grid">
+    {% include "includes/field.html" with field=form.name %}
+    {% include "includes/field.html" with field=form.inmate_id %}
+    {% include "includes/field.html" with field=form.facility full=True %}
+    {% include "includes/field.html" with field=form.housing %}
+    {% include "includes/field.html" with field=form.active %}
+    {% include "includes/field.html" with field=form.notes full=True %}
+  </div>
+  <div class="card-foot row-between"><a href="{{ person.get_absolute_url }}">Cancel</a><button class="btn btn-primary" type="submit">Save</button></div>
+</form>
+{% endblock %}

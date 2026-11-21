@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Packages{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Packages</h1><p>Packing, in the mail, delivered or back again.</p></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'shipping:print_batch' %}?kind=slips" target="_blank" rel="noopener">{% icon "print" %} All packing slips</a>
+    <a class="btn" href="{% url 'shipping:print_batch' %}?kind=labels" target="_blank" rel="noopener">{% icon "print" %} All labels</a>
+  </div>
+</div>
+<nav class="tabs" aria-label="Status">
+  {% for key, label, n in tabs %}<a href="?status={{ key }}" {% if key == status %}aria-current="page"{% endif %}>{{ label }}<span class="count">{{ n }}</span></a>{% endfor %}
+</nav>
+<form class="filters" method="get">
+  <input type="hidden" name="status" value="{{ status }}">
+  <div class="searchbox">{% icon "search" 16 %}<input type="search" name="q" value="{{ query }}" placeholder="Name or tracking number…" aria-label="Search packages"></div>
+  <button class="btn" type="submit">Search</button>
+</form>
+<div class="card">
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Package</th><th>Facility</th><th class="num">Books</th><th>Status</th><th class="num">Shipped</th></tr></thead>
+    <tbody>
+    {% for p in page %}
+      <tr>
+        <td><a class="rowlink" href="{{ p.get_absolute_url }}">{{ p.reference }} · {{ p.person.name }}</a><span class="sub">{% if p.tracking_number %}<span class="mono">{{ p.tracking_number }}</span>{% else %}{{ p.get_carrier_display|default:"" }}{% endif %}</span></td>
+        <td>{{ p.facility.name }}<span class="sub">{{ p.facility.city }}, {{ p.facility.state }}</span></td>
+        <td class="num">{{ p.item_count }}</td>
+        <td>{% status_pill p.status p.get_status_display %}</td>
+        <td class="num">{{ p.shipped_on|date:"M j, Y"|default:"—" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "includes/pagination.html" %}
+  {% else %}
+  <div class="empty">{% icon "package" 40 %}<p>No packages here.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

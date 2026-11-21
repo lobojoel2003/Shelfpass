@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Returns{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Returns</h1><p>Packages that came back to {{ current_org.name }} — and why.</p></div>
+  <div class="actions"><a class="btn" href="{% url 'facilities:rejections' %}">{% icon "chart" %} Shared rejection data</a></div></div>
+<div class="card">
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Package</th><th>Facility</th><th>Reason</th><th>Book</th><th class="num">Came back</th></tr></thead>
+    <tbody>
+    {% for r in page %}
+      <tr>
+        <td><a class="rowlink" href="{{ r.package.get_absolute_url }}">{{ r.package.reference }}</a><span class="sub">{{ r.package.person.name }}</span></td>
+        <td><a href="{{ r.facility.get_absolute_url }}">{{ r.facility.name }}</a></td>
+        <td><span class="pill pill-block">{{ r.get_reason_display }}</span>{% if r.detail %}<span class="sub">“{{ r.detail|truncatechars:80 }}”</span>{% endif %}</td>
+        <td>{{ r.flagged_item.title|default:"—" }}</td>
+        <td class="num">{{ r.received_on|date:"M j, Y" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "includes/pagination.html" %}
+  {% else %}
+  <div class="empty">{% icon "return" 40 %}<p>No returns logged. When a package comes back, open it and press “It came back”.</p></div>
+  {% endif %}
+</div>
+{% endblock %}

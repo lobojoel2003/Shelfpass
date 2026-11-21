@@ -1,0 +1,16 @@
+{% extends "shipping/print/base_print.html" %}
+{% block title %}Shipping label{% if pages|length > 1 %}s{% endif %}{% endblock %}
+{% block page_css %}size: 6in 4in; margin: 0;{% endblock %}
+{% block hint %}4×6 in thermal label · landscape{% endblock %}
+{% block sheets %}
+{% for p in pages %}
+<section class="sheet label">
+  <div class="from">{% for line in p.org.sender_lines %}{% if forloop.first %}<strong>{{ line }}</strong>{% else %}{{ line }}{% endif %}<br>{% endfor %}</div>
+  <address class="to"><strong>{{ p.recipient_line }}</strong><br>{% for line in p.address_lines %}{{ line }}<br>{% endfor %}</address>
+  <div class="label-foot">
+    <span class="mono">{{ p.package.reference }} · {{ p.items|length }} book{{ p.items|length|pluralize }}</span>
+    {% if p.package.carrier == 'usps-media' or not p.package.carrier %}<span class="service">MEDIA MAIL</span>{% endif %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

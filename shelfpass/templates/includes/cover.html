@@ -1,0 +1,1 @@
+{% load shelfpass %}<div class="cover{% if large %} lg{% endif %}" aria-hidden="true">{% if book.cover_url %}<img src="{{ book.cover_url }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% else %}{{ book.title|initials }}{% endif %}</div>

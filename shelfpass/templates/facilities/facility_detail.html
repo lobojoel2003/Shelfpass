@@ -1,0 +1,102 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}{{ facility.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow"><a href="{% url 'facilities:list' %}">← Facilities</a> · {{ facility.get_kind_display }}{% if facility.is_sample %} <span class="pill pill-sample">Sample data</span>{% endif %}{% if not facility.active %} <span class="pill pill-muted">Closed</span>{% endif %}</div>
+    <h1>{{ facility.name }}</h1>
+    <p>{{ facility.city }}, {{ facility.state }}{% if facility.jurisdiction %} · rules set by {{ facility.jurisdiction.name }}{% endif %}</p>
+  </div>
+  <div class="actions">
+    {% if current_org %}<a class="btn btn-accent" href="{% url 'correspondence:intake' %}?facility={{ facility.pk }}">{% icon "letter" 16 %} Log a letter from here</a>{% endif %}
+    {% if current_org and not facility.is_from_dataset %}<a class="btn" href="{% url 'facilities:edit' facility.slug %}">{% icon "edit" 16 %} Edit</a>{% endif %}
+  </div>
+</div>
+
+{% if facility.is_sample %}<div class="banner" style="margin-bottom:1.25rem">{% icon "info" %}<div>This facility is <strong>fictional</strong>. It ships with Shelfpass's demo data so you can try the app.</div></div>{% endif %}
+
+<div class="split">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>Mail rules for books</h2><span class="small muted">{% if facility.last_verified %}Verified {{ facility.last_verified|date:"M j, Y" }}{% else %}Not verified yet{% endif %}</span></div>
+      <div class="card-body stack">
+        {% include "includes/rule_chips.html" %}
+        {% if rules.notes %}<ul style="margin:0;padding-left:1.2rem">{% for n in rules.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+        {% if rules.banned_content %}<div><h3>Content restrictions</h3><ul style="margin:0;padding-left:1.2rem">{% for l in rules.content_labels %}<li>{{ l }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if rules.banned_titles %}<div><h3>Banned titles</h3><ul style="margin:0;padding-left:1.2rem">{% for t in rules.banned_titles %}<li>{{ t.title }}{% if t.author %} — {{ t.author }}{% endif %}{% if t.note %} <span class="muted small">({{ t.note }})</span>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
+        {% if rules.approved_vendors %}<p style="margin:0"><strong>Approved vendors:</strong> {{ rules.approved_vendors|join:", " }}</p>{% endif %}
+        {% if facility.notes %}<p class="muted" style="white-space:pre-line;margin:0">{{ facility.notes }}</p>{% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Rejection history</h2><span class="small muted">{{ event_total }} on record · from every group</span></div>
+      <div class="card-body">
+        {% if events %}
+        <ul class="timeline">
+          {% for e in events %}
+          <li>
+            <time datetime="{{ e.date|date:'Y-m-d' }}">{% if e.month_only %}{{ e.date|date:"M Y" }}{% else %}{{ e.date|date:"M j, Y" }}{% endif %}</time>
+            <div>
+              <span class="pill pill-block">{{ e.reason_label }}</span>
+              {% if e.title %}<strong> “{{ e.title }}”</strong>{% if e.authors %} <span class="muted">{{ e.authors }}</span>{% endif %}{% endif %}
+              {% if e.format_label %}<span class="muted small"> · {{ e.format_label }}</span>{% endif %}
+              {% if e.detail %}<div class="small" style="margin-top:.2rem">“{{ e.detail }}”</div>{% endif %}
+              <div class="small muted">{{ e.source }}</div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty">{% icon "check" 36 %}<p>No rejections logged here yet.</p></div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <aside class="stack">
+    <section class="card">
+      <div class="card-head"><h3>{% icon "letter" %} Mailing address</h3></div>
+      <div class="card-body">
+        <address class="address">Name #ID<br>{% for line in facility.book_address_lines %}{{ line }}<br>{% endfor %}</address>
+        <p class="small muted" style="margin:.6rem 0 0">Recipient line format: <code>{{ rules.recipient_format }}</code></p>
+        {% if rules.book_mail_address %}<p class="small" style="margin:.4rem 0 0">Books go to central processing, not the facility itself.</p>{% endif %}
+        {% if facility.phone or facility.website %}<dl class="kv" style="margin-top:.75rem">{% if facility.phone %}<dt>Phone</dt><dd>{{ facility.phone }}</dd>{% endif %}{% if facility.website %}<dt>Website</dt><dd><a href="{{ facility.website }}" rel="noopener nofollow">Visit {% icon "external" 13 %}</a></dd>{% endif %}</dl>{% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h3>{% icon "chart" %} Last {{ window_days }} days</h3></div>
+      <div class="card-body stack">
+        <div class="grid grid-2" style="gap:.75rem">
+          <div><div class="small muted">Shipped here</div><div style="font:600 1.6rem var(--serif)">{{ stats.shipped }}</div></div>
+          <div><div class="small muted">Bounced</div><div style="font:600 1.6rem var(--serif)">{{ stats.returned }}{% if stats.shipped %} <span class="small muted">({{ stats.rate }}%)</span>{% endif %}</div></div>
+        </div>
+        {% if breakdown %}
+        <div class="bars">{% for r in breakdown %}<div class="bar"><span>{{ r.label }}</span><span class="n">{{ r.count }}</span><div class="track"><div class="fill" style="width:{{ r.percent }}%"></div></div></div>{% endfor %}</div>
+        {% else %}<p class="small muted" style="margin:0">No rejections in this window.</p>{% endif %}
+      </div>
+    </section>
+
+    {% if our_packages %}
+    <section class="card">
+      <div class="card-head"><h3>{% icon "package" %} Your group's packages</h3><span class="small muted">{{ our_people }} reader{{ our_people|pluralize }}</span></div>
+      <div class="card-body"><ul class="mini-list">{% for p in our_packages %}<li><a href="{{ p.get_absolute_url }}">{{ p.reference }} · {{ p.person.name }}</a>{% status_pill p.status p.get_status_display %}</li>{% endfor %}</ul></div>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <div class="card-head"><h3>{% icon "book" %} Sources &amp; corrections</h3></div>
+      <div class="card-body small stack">
+        {% if facility.all_sources %}<ul style="margin:0;padding-left:1.1rem">{% for s in facility.all_sources %}<li>{% if s.url %}<a href="{{ s.url }}" rel="noopener nofollow">{{ s.title|default:s.url }}</a>{% else %}{{ s.title }}{% endif %}{% if s.accessed %} <span class="muted">(accessed {{ s.accessed }})</span>{% endif %}</li>{% endfor %}</ul>
+        {% else %}<p style="margin:0" class="muted">No sources recorded.</p>{% endif %}
+        <p style="margin:0">{% if facility.is_from_dataset %}These rules live in the open dataset at <code>dataset/{{ dataset_path }}</code>. Spot something wrong?{% else %}This facility was added on this site and isn't in the shared dataset yet.{% endif %}</p>
+        <div class="actions">
+          <a class="btn btn-sm" href="{% url 'facilities:export' facility.slug %}?download=1">{% icon "download" 14 %} Dataset JSON</a>
+          <a class="btn btn-sm" href="{{ contribute_url }}" rel="noopener">{% icon "external" 14 %} {% if facility.is_from_dataset %}Suggest a correction{% else %}Contribute it{% endif %}</a>
+        </div>
+      </div>
+    </section>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Group settings{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Group settings</h1><p>Printed on every packing slip and label.</p></div></div>
+<form method="post" class="card" style="max-width:760px">{% csrf_token %}
+  <div class="card-body form-grid">
+    {% include "includes/field.html" with field=form.name full=True %}
+    {% include "includes/field.html" with field=form.return_address full=True %}
+    {% include "includes/field.html" with field=form.contact_email %}
+    {% include "includes/field.html" with field=form.website %}
+    {% include "includes/field.html" with field=form.packing_slip_note full=True %}
+    {% include "includes/field.html" with field=form.share_rejections full=True %}
+  </div>
+  <div class="card-foot row-between"><span class="small muted">Group ID: <code>{{ current_org.slug }}</code></span><button class="btn btn-primary" type="submit">Save settings</button></div>
+</form>
+{% endblock %}

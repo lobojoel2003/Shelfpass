@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}{% if creating %}Add a book{% else %}Edit {{ book.title }}{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <div class="eyebrow"><a href="{% url 'inventory:list' %}">← Shelf</a></div>
+  <h1>{% if creating %}Add a book to the shelf{% else %}{{ book.title }}{% endif %}</h1>
+  <p>Scan or type an ISBN, or search by title, to fill details in from Open Library.</p>
+</div></div>
+<div class="split">
+  <form method="post" id="book-form" class="card">{% csrf_token %}
+    {{ form.openlibrary_key }}{{ form.cover_id }}
+    {% if form.non_field_errors %}<ul class="errorlist nonfield">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+    <div class="card-body form-grid">
+      {% include "includes/field.html" with field=form.title full=True %}
+      {% include "includes/field.html" with field=form.authors %}
+      {% include "includes/field.html" with field=form.isbn %}
+      {% include "includes/field.html" with field=form.format %}
+      {% include "includes/field.html" with field=form.condition %}
+      {% include "includes/field.html" with field=form.category %}
+      {% include "includes/field.html" with field=form.quantity %}
+      {% include "includes/field.html" with field=form.location %}
+      {% include "includes/field.html" with field=form.weight_oz %}
+      {% include "includes/field.html" with field=form.publisher %}
+      {% include "includes/field.html" with field=form.year %}
+      {% include "includes/field.html" with field=form.subjects_text full=True %}
+      {% include "includes/field.html" with field=form.content_flags full=True %}
+      {% include "includes/field.html" with field=form.notes full=True %}
+    </div>
+    <div class="card-foot row-between">
+      {% if book %}<button class="btn btn-danger btn-sm" type="submit" form="delete-form">{% icon "trash" 15 %} Remove from shelf</button>{% else %}<a href="{% url 'inventory:list' %}">Cancel</a>{% endif %}
+      <div class="actions">
+        {% if creating %}<button class="btn" type="submit" name="add_another" value="1">Save &amp; add another</button>{% endif %}
+        <button class="btn btn-primary" type="submit">Save</button>
+      </div>
+    </div>
+  </form>
+  <aside class="card sticky">
+    <div class="card-head"><h3>{% icon "search" %} Open Library lookup</h3></div>
+    <div class="card-body stack" id="ol-lookup" data-url="{% url 'inventory:lookup' %}">
+      <div class="row" style="flex-wrap:nowrap">
+        <input type="search" placeholder="ISBN, or title and author" aria-label="Search Open Library" value="{{ form.title.value|default:'' }}">
+        <button class="btn" type="button">Search</button>
+      </div>
+      <div id="ol-results" class="suggestions" aria-live="polite"></div>
+      <p class="small muted" style="margin:0">Book data from <a href="https://openlibrary.org" rel="noopener">Open Library</a>. Always set the format and condition of <em>your</em> copy — that's what facilities check.</p>
+    </div>
+  </aside>
+</div>
+{% if book %}<form id="delete-form" method="post" action="{% url 'inventory:delete' book.pk %}" data-confirm="Remove “{{ book.title }}” from the shelf?">{% csrf_token %}</form>{% endif %}
+{% endblock %}

@@ -1,0 +1,21 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Print{% endblock %} · Shelfpass</title>
+  <link rel="icon" href="{% static 'shelfpass/logo.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'shelfpass/print.css' %}">
+  <style>@page { {% block page_css %}size: letter; margin: 0;{% endblock %} }</style>
+</head>
+<body>
+  <div class="toolbar">
+    <button type="button" data-print>Print</button>
+    {% if pages|length == 1 %}<a href="{{ pages.0.package.get_absolute_url }}">Back to {{ pages.0.package.reference }}</a>{% else %}<a href="{% url 'shipping:list' %}">Back to packages</a>{% endif %}
+    <span>{% block hint %}{% endblock %}</span>
+  </div>
+  {% block sheets %}{% endblock %}
+  {% if not pages %}<div class="empty-batch"><p>Nothing to print — no packages with books are being packed.</p></div>{% endif %}
+  <script src="{% static 'shelfpass/app.js' %}" defer></script>
+</body>
+</html>

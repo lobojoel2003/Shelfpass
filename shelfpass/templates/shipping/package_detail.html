@@ -1,0 +1,145 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}{{ package.reference }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow"><a href="{{ package.request.get_absolute_url }}">← {{ package.request.reference }}</a> · {% status_pill package.status package.get_status_display %}</div>
+    <h1>{{ package.reference }} to {{ package.person.name }}</h1>
+    <p><a href="{{ package.facility.get_absolute_url }}">{{ package.facility.name }}</a> · {{ package.facility.city }}, {{ package.facility.state }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'shipping:slip' package.pk %}" target="_blank" rel="noopener">{% icon "print" 16 %} Packing slip{% if rules.invoice_required %} / invoice{% endif %}</a>
+    <a class="btn" href="{% url 'shipping:label' package.pk %}" target="_blank" rel="noopener">{% icon "print" 16 %} Label</a>
+    {% if package.status == 'shipped' or package.status == 'delivered' %}
+    {% if not package.return_record %}<a class="btn btn-danger" href="{% url 'shipping:log_return' package.pk %}">{% icon "return" 16 %} It came back</a>{% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<div class="split">
+  <div class="stack">
+    {% if package.return_record %}
+    <div class="alert alert-error">{% icon "return" %}<div><strong>{% if package.return_record.is_lost %}Vanished{% else %}Returned {{ package.return_record.received_on|date:"M j, Y" }}{% endif %}: {{ package.return_record.get_reason_display }}</strong>{% if package.return_record.detail %}<div class="alert-body">“{{ package.return_record.detail }}”</div>{% endif %}{% if package.return_record.restocked %}<div class="alert-body small">Books were put back on the shelf.</div>{% endif %}</div></div>
+    {% endif %}
+
+    <section class="card">
+      <div class="card-head"><h2>In the box</h2><span class="small muted">{{ items|length|pluralize_count:"book" }}{% if rules.max_books_per_package %} of max {{ rules.max_books_per_package }}{% endif %}</span></div>
+      {% if items %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Book</th><th>Format</th><th>For</th>{% if package.is_editable %}<th></th>{% endif %}</tr></thead>
+        <tbody>
+        {% for i in items %}
+          <tr>
+            <td><strong>{{ i.title }}</strong><span class="sub">{{ i.authors|default:"" }}{% if i.isbn %} · <span class="mono">{{ i.isbn }}</span>{% endif %}</span>
+              {% with dup=duplicates|get_item:i.pk %}{% if dup %}<span class="pill pill-warn" style="margin-top:.25rem">{% icon "repeat" 12 %} Already sent in {{ dup.package_reference }}{% if dup.shipped_on %} ({{ dup.shipped_on|date:"M Y" }}){% endif %}</span>{% endif %}{% endwith %}
+            </td>
+            <td>{{ i.get_condition_display }} {{ i.get_format_display|lower }}{% if i.source == 'vendor' %}<span class="sub">From vendor</span>{% endif %}</td>
+            <td class="small">{{ i.requested_item.description|default:"—" }}</td>
+            {% if package.is_editable %}<td class="num"><form class="inline-form" method="post" action="{% url 'shipping:remove_item' package.pk i.pk %}">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit" title="Remove and put back on the shelf">{% icon "x" 15 label="Remove" %}</button></form></td>{% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}
+      <div class="empty"><p>Empty. Add books from the shelf below or from the request page.</p></div>
+      {% endif %}
+    </section>
+
+    {% if package.is_editable %}
+    <section class="card">
+      <div class="card-head"><h3>{% icon "shelf" %} Add from the shelf</h3></div>
+      <div class="card-body">
+        <form method="get" class="filters" style="margin:0">
+          <div class="searchbox" style="flex:1">{% icon "search" 16 %}<input type="search" name="q" value="{{ query }}" placeholder="Title, author or ISBN" aria-label="Search the shelf"></div>
+          <button class="btn" type="submit">Search</button>
+        </form>
+        {% if query %}
+        <div class="suggestions">
+          {% for book in shelf_results %}
+          <div class="suggestion{% if not book.allowed %} not-allowed{% endif %}">
+            {% include "includes/cover.html" %}
+            <div><div class="title">{{ book.title }}</div><div class="small muted">{{ book.authors }} · {{ book.get_condition_display }} {{ book.get_format_display|lower }} · {{ book.quantity }} on hand</div>
+              <div class="chips" style="margin-top:.25rem">{% if not book.allowed %}<span class="pill pill-block">Not allowed here</span>{% endif %}{% if book.previously_sent %}<span class="pill pill-warn">Sent before</span>{% endif %}</div></div>
+            <form class="inline-form" method="post" action="{% url 'shipping:add_book' package.pk %}">{% csrf_token %}<input type="hidden" name="book" value="{{ book.pk }}">
+              {% if open_items %}<select name="item" aria-label="For which request" style="width:auto;margin-right:.4rem"><option value="">—</option>{% for it in open_items %}<option value="{{ it.pk }}">{{ it.description|truncatechars:30 }}</option>{% endfor %}</select>{% endif %}
+              <button class="btn btn-sm btn-primary" type="submit">{% icon "plus" 14 %} Add</button></form>
+          </div>
+          {% empty %}<p class="small muted" style="margin:.5rem 0 0">No in-stock books match “{{ query }}”.</p>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <details class="card-foot" id="vendor" {% if rules.vendor_only %}open{% endif %}>
+        <summary>{% icon "truck" 16 %} Ordered new from a vendor{% if rules.vendor_only %} (required here){% endif %}</summary>
+        <form method="post" action="{% url 'shipping:add_vendor_item' package.pk %}" class="form-grid" style="margin-top:.75rem">{% csrf_token %}
+          {% include "includes/field.html" with field=vendor_form.title %}
+          {% include "includes/field.html" with field=vendor_form.authors %}
+          {% include "includes/field.html" with field=vendor_form.isbn %}
+          {% include "includes/field.html" with field=vendor_form.format %}
+          {% if open_items %}<div class="field"><label for="vendor-item">For</label><select id="vendor-item" name="item"><option value="">—</option>{% for it in open_items %}<option value="{{ it.pk }}">{{ it.description }}</option>{% endfor %}</select></div>{% endif %}
+          {% if rules.approved_vendors %}<p class="small muted full">Approved vendors: {{ rules.approved_vendors|join:", " }}</p>{% endif %}
+          <div class="full"><button class="btn btn-sm" type="submit">{% icon "plus" 14 %} Add vendor order</button></div>
+        </form>
+      </details>
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="stack">
+    <section class="card">
+      <div class="card-head"><h3>{% icon "check" %} Rule check</h3></div>
+      <div class="card-body stack">
+        {% include "includes/rule_chips.html" %}
+        {% if issues %}{% include "includes/issues.html" %}{% else %}<div class="issue info">{% icon "check" 17 %}<span>No problems found against {{ package.facility.name }}'s rules on file.</span></div>{% endif %}
+      </div>
+    </section>
+
+    {% if package.is_editable %}
+    <section class="card">
+      <div class="card-head"><h3>{% icon "truck" %} Ship it</h3></div>
+      <form method="post" action="{% url 'shipping:ship' package.pk %}" class="card-body stack">{% csrf_token %}
+        <div class="form-grid">
+          {% include "includes/field.html" with field=ship_form.shipped_on %}
+          {% include "includes/field.html" with field=ship_form.carrier %}
+          {% include "includes/field.html" with field=ship_form.weight_oz %}
+          {% include "includes/field.html" with field=ship_form.postage %}
+          {% include "includes/field.html" with field=ship_form.tracking_number full=True %}
+          {% for i in issues %}{% if i.is_blocking and forloop.first %}{% include "includes/field.html" with field=ship_form.override_note full=True %}{% endif %}{% endfor %}
+        </div>
+        <button class="btn btn-primary" type="submit" {% if not items %}disabled{% endif %}>{% icon "truck" 16 %} Mark as shipped</button>
+      </form>
+      <div class="card-foot">
+        <form method="post" action="{% url 'shipping:discard' package.pk %}" data-confirm="Discard this package and put its books back on the shelf?">{% csrf_token %}<button class="btn btn-ghost btn-sm" type="submit">{% icon "trash" 15 %} Discard package</button></form>
+      </div>
+    </section>
+    {% else %}
+    <section class="card">
+      <div class="card-head"><h3>{% icon "truck" %} Shipping</h3></div>
+      <div class="card-body">
+        <dl class="kv">
+          <dt>Shipped</dt><dd>{{ package.shipped_on|date:"M j, Y"|default:"—" }}</dd>
+          <dt>Carrier</dt><dd>{{ package.get_carrier_display|default:"—" }}</dd>
+          <dt>Tracking</dt><dd class="mono">{{ package.tracking_number|default:"—" }}</dd>
+          <dt>Weight</dt><dd>{% if package.weight_oz %}{{ package.weight_oz }} oz{% else %}—{% endif %}</dd>
+          <dt>Postage</dt><dd>{{ package.postage_display|default:"—" }}</dd>
+          {% if package.delivered_on %}<dt>Delivered</dt><dd>{{ package.delivered_on|date:"M j, Y" }}</dd>{% endif %}
+          {% if package.override_note %}<dt>Override</dt><dd>{{ package.override_note }}</dd>{% endif %}
+        </dl>
+      </div>
+      {% if package.status == 'shipped' %}
+      <form method="post" action="{% url 'shipping:deliver' package.pk %}" class="card-foot row">{% csrf_token %}
+        <label class="sr-only" for="delivered_on">Delivered on</label>{{ deliver_form.delivered_on }}
+        <button class="btn btn-sm" type="submit">{% icon "check" 15 %} Delivered</button>
+      </form>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if recent_rejections %}
+    <section class="card">
+      <div class="card-head"><h3>{% icon "return" %} Recent rejections here</h3></div>
+      <div class="card-body"><ul class="mini-list">{% for e in recent_rejections %}<li><span>{{ e.reason_label }}{% if e.title %} <span class="muted small">· “{{ e.title }}”</span>{% endif %}</span><span class="muted small">{% if e.month_only %}{{ e.date|date:"M Y" }}{% else %}{{ e.date|date:"M j" }}{% endif %}</span></li>{% endfor %}</ul></div>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

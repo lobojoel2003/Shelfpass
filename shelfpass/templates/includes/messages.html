@@ -1,0 +1,7 @@
+{% load shelfpass %}{% if messages %}
+<ul class="messages" role="status">
+  {% for message in messages %}
+  <li class="alert alert-{{ message.tags|default:'info' }}">{% if message.tags == 'error' %}{% icon "alert" %}{% elif message.tags == 'success' %}{% icon "check" %}{% else %}{% icon "info" %}{% endif %}<div>{{ message }}</div></li>
+  {% endfor %}
+</ul>
+{% endif %}

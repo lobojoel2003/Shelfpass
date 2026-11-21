@@ -1,0 +1,26 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Log a return · {{ package.reference }}{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <div class="eyebrow"><a href="{{ package.get_absolute_url }}">← {{ package.reference }}</a></div>
+  <h1>Log a returned package</h1>
+  <p>Sent to {{ package.person.name }} at {{ package.facility.name }}{% if package.shipped_on %} on {{ package.shipped_on|date:"M j, Y" }}{% endif %}.</p>
+</div></div>
+<div class="split">
+  <form method="post" class="card">{% csrf_token %}
+    <div class="card-body form-grid">
+      {% include "includes/field.html" with field=form.reason %}
+      {% include "includes/field.html" with field=form.received_on %}
+      {% include "includes/field.html" with field=form.flagged_item full=True %}
+      {% include "includes/field.html" with field=form.detail full=True %}
+      {% include "includes/field.html" with field=form.restock full=True %}
+    </div>
+    <div class="card-foot row-between"><a href="{{ package.get_absolute_url }}">Cancel</a><button class="btn btn-primary" type="submit">{% icon "return" 16 %} Log return</button></div>
+  </form>
+  <aside class="card"><div class="card-body small">
+    <h3>Why this matters</h3>
+    <p>Each return you log appears on the facility's page for every group using Shelfpass, and (if your group shares data) in the public rejection dataset. Names and ID numbers are never shared.</p>
+    <p class="muted">Package never arrived? Choose “Never arrived (vanished)”. The books won't be restocked.</p>
+  </div></aside>
+</div>
+{% endblock %}

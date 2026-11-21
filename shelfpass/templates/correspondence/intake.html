@@ -1,0 +1,109 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Log a letter{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{% icon "letter" 15 %} New letter</div>
+    <h1>Log a letter</h1>
+    <p>Type in who wrote, where they are and what they asked for. Rules and history appear as you go.</p>
+  </div>
+</div>
+
+<form method="post" id="intake-form" novalidate
+      data-rules-url="{% url 'facilities:rules_json' 'SLUG' %}"
+      data-person-url="{% url 'correspondence:person_lookup' %}">
+  {% csrf_token %}
+  {{ form.person_id }}
+  <div class="split">
+    <div class="stack">
+      {% if form.non_field_errors or items.non_form_errors %}
+      <ul class="errorlist nonfield">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}{% for e in items.non_form_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+      {% endif %}
+
+      <section class="card">
+        <div class="card-head"><h2>Who wrote</h2><span class="small muted">From the envelope</span></div>
+        <div class="card-body">
+          <div class="form-grid">
+            {% include "includes/field.html" with field=form.name %}
+            {% include "includes/field.html" with field=form.inmate_id %}
+            <div class="field full{% if form.facility.errors %} has-error{% endif %}">
+              <label for="{{ form.facility.id_for_label }}">Facility <span class="muted" aria-hidden="true">*</span></label>
+              <div class="row" style="flex-wrap:nowrap">
+                {{ form.facility }}
+                <a class="btn" href="{% url 'facilities:create' %}?next=intake" title="Add a facility that isn't listed">{% icon "plus" 16 %} New</a>
+              </div>
+              <span class="help">Not listed? Add it — it will be shared with every group on this site.</span>
+              {{ form.facility.errors }}
+            </div>
+            {% include "includes/field.html" with field=form.housing %}
+            {% include "includes/field.html" with field=form.received_on %}
+          </div>
+          <div id="person-match" class="match-card" hidden style="margin-top:1rem" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>What they asked for</h2><span class="small muted">One line per book, series or topic</span></div>
+        <div class="card-body">
+          {{ items.management_form }}
+          <div class="item-head" aria-hidden="true"><span>Book or topic</span><span>Author (if known)</span><span>Kind</span><span></span></div>
+          <div class="item-rows" id="item-rows">
+            {% for item in items %}
+            <div class="item-row" data-item-row>
+              <div class="field{% if item.description.errors %} has-error{% endif %}"><label class="sr-only" for="{{ item.description.id_for_label }}">Book or topic</label>{{ item.description }}{{ item.description.errors }}</div>
+              <div class="field"><label class="sr-only" for="{{ item.author.id_for_label }}">Author</label>{{ item.author }}</div>
+              <div class="field"><label class="sr-only" for="{{ item.kind.id_for_label }}">Kind</label>{{ item.kind }}</div>
+              <button type="button" class="btn btn-ghost btn-sm remove" data-remove-row title="Remove this line">{% icon "x" 16 label="Remove" %}</button>
+            </div>
+            {% endfor %}
+          </div>
+          <template id="item-template">
+            <div class="item-row" data-item-row>
+              <div class="field"><label class="sr-only" for="{{ items.empty_form.description.id_for_label }}">Book or topic</label>{{ items.empty_form.description }}</div>
+              <div class="field"><label class="sr-only" for="{{ items.empty_form.author.id_for_label }}">Author</label>{{ items.empty_form.author }}</div>
+              <div class="field"><label class="sr-only" for="{{ items.empty_form.kind.id_for_label }}">Kind</label>{{ items.empty_form.kind }}</div>
+              <button type="button" class="btn btn-ghost btn-sm remove" data-remove-row title="Remove this line">{% icon "x" 16 label="Remove" %}</button>
+            </div>
+          </template>
+          <div class="row" style="margin-top:.75rem">
+            <button type="button" class="btn btn-sm" id="add-item">{% icon "plus" 15 %} Add another line</button>
+            <span class="small muted">Tip: choose “Topic or genre” for things like “a dictionary” or “fantasy series”.</span>
+          </div>
+          <div id="already-sent" class="alert alert-warn" hidden style="margin-top:1rem" aria-live="polite"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-body">
+          {% include "includes/field.html" with field=form.letter_notes %}
+        </div>
+        <div class="card-foot row-between">
+          <span class="small muted">Next you'll pick books from the shelf.</span>
+          <div class="actions">
+            <button class="btn" type="submit" name="add_another" value="1">Save &amp; log another</button>
+            <button class="btn btn-primary btn-lg" type="submit">Save and find books {% icon "arrow" 16 %}</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="card sticky rule-card" aria-live="polite">
+      <div class="card-head"><h3>{% icon "building" %} Facility rules</h3><a id="rules-link" class="small" href="#" hidden>Details →</a></div>
+      <div class="card-body">
+        <div id="rules-empty" class="muted small">Choose a facility to see its mail rules, recent rejections and how to address the package.</div>
+        <div id="rule-panel" class="rule-panel" hidden>
+          <div class="facility-name" id="rules-name"></div>
+          <div class="small muted" id="rules-verified" style="margin-bottom:.6rem"></div>
+          <div class="chips" id="rules-chips"></div>
+          <ul class="notes" id="rules-notes"></ul>
+          <div style="margin-top:1rem">
+            <div class="eyebrow">Address the package to</div>
+            <address class="address small" id="rules-address"></address>
+          </div>
+          <div style="margin-top:1rem" id="rules-rejections"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</form>
+{% endblock %}

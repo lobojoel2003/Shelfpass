@@ -1,0 +1,39 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Rejection data{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="eyebrow">{% icon "chart" 15 %} Open data · CC BY-SA 4.0</div><h1>Why book packages get rejected</h1><p>{{ total }} rejection{{ total|pluralize }} logged in the last {{ window_days }} days, by every group using this site and the shared dataset. No names or ID numbers are ever included.</p></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'facilities:rejections_csv' %}">{% icon "download" 16 %} CSV</a>
+    <a class="btn" href="{% url 'facilities:rejections_json' %}">{% icon "download" 16 %} JSON</a>
+  </div>
+</div>
+<div class="grid grid-3">
+  <section class="card"><div class="card-head"><h3>By reason</h3></div><div class="card-body">
+    {% if breakdown %}<div class="bars">{% for r in breakdown %}<div class="bar"><span>{{ r.label }}</span><span class="n">{{ r.count }}</span><div class="track"><div class="fill" style="width:{{ r.percent }}%"></div></div></div>{% endfor %}</div>{% else %}<p class="muted small">Nothing logged yet.</p>{% endif %}
+  </div></section>
+  <section class="card"><div class="card-head"><h3>Most rejections</h3></div><div class="card-body">
+    {% if by_facility %}<ul class="mini-list">{% for key, n in by_facility %}<li><a href="{% url 'facilities:detail' key.0 %}">{{ key.1 }}</a><strong>{{ n }}</strong></li>{% endfor %}</ul>{% else %}<p class="muted small">Nothing logged yet.</p>{% endif %}
+  </div></section>
+  <section class="card"><div class="card-head"><h3>Titles refused for content</h3></div><div class="card-body">
+    {% if banned %}<ul class="mini-list">{% for key, n in banned %}<li><span>{{ key.0 }}{% if key.1 %} <span class="muted small">· {{ key.1 }}</span>{% endif %}</span><strong>{{ n }}</strong></li>{% endfor %}</ul>{% else %}<p class="muted small">No content rejections logged.</p>{% endif %}
+  </div></section>
+</div>
+<section class="card" style="margin-top:1.25rem">
+  <div class="card-head"><h2>Latest</h2></div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>When</th><th>Facility</th><th>Reason</th><th>Book</th><th>Reported by</th></tr></thead>
+    <tbody>
+    {% for e in events %}
+      <tr>
+        <td class="small">{% if e.month_only %}{{ e.date|date:"M Y" }}{% else %}{{ e.date|date:"M j, Y" }}{% endif %}</td>
+        <td><a href="{% url 'facilities:detail' e.facility_slug %}">{{ e.facility_name }}</a></td>
+        <td><span class="pill pill-block">{{ e.reason_label }}</span></td>
+        <td>{{ e.title|default:"—" }}{% if e.format_label %}<span class="sub">{{ e.format_label }}</span>{% endif %}</td>
+        <td class="small muted">{{ e.source }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="5" class="muted">Nothing logged yet.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

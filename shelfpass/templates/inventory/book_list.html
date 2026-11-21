@@ -1,0 +1,47 @@
+{% extends "base.html" %}{% load shelfpass humanize %}
+{% block title %}Shelf{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Shelf</h1><p>{{ copies|intcomma }} cop{{ copies|pluralize:"y,ies" }} on hand. Shelfpass takes books off the shelf as you pack them.</p></div>
+  <div class="actions">
+    <a class="btn" href="{% url 'inventory:import' %}">{% icon "upload" 16 %} Import CSV</a>
+    <a class="btn" href="{% url 'inventory:export' %}">{% icon "download" 16 %} Export</a>
+    <a class="btn btn-primary" href="{% url 'inventory:create' %}">{% icon "plus" 16 %} Add a book</a>
+  </div>
+</div>
+<form class="filters" method="get">
+  <div class="searchbox">{% icon "search" 16 %}<input type="search" name="q" value="{{ query }}" placeholder="Title, author, ISBN or shelf…" aria-label="Search the shelf"></div>
+  <select name="category" aria-label="Category"><option value="">All categories</option>{% for v, l in categories %}<option value="{{ v }}" {% if v == category %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <select name="format" aria-label="Format"><option value="">Any format</option>{% for v, l in formats %}<option value="{{ v }}" {% if v == format %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <select name="condition" aria-label="Condition"><option value="">New or used</option>{% for v, l in conditions %}<option value="{{ v }}" {% if v == condition %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <select name="stock" aria-label="Stock"><option value="in" {% if stock == 'in' %}selected{% endif %}>In stock</option><option value="out" {% if stock == 'out' %}selected{% endif %}>Out of stock</option><option value="all" {% if stock == 'all' %}selected{% endif %}>Everything</option></select>
+  <button class="btn" type="submit">Filter</button>
+</form>
+<div class="card">
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Book</th><th>Category</th><th>Copy</th><th>Shelf</th><th class="num">On hand</th></tr></thead>
+    <tbody>
+    {% for b in page %}
+      <tr>
+        <td><div class="row" style="flex-wrap:nowrap;align-items:flex-start">{% include "includes/cover.html" with book=b %}<div><a class="rowlink" href="{% url 'inventory:edit' b.pk %}">{{ b.title }}</a><span class="sub">{{ b.authors|default:"Unknown author" }}{% if b.isbn %} · <span class="mono">{{ b.isbn }}</span>{% endif %}</span>{% if b.content_flags %}<span class="pill pill-warn" style="margin-top:.25rem">{% icon "alert" 12 %} Restricted at some facilities</span>{% endif %}</div></div></td>
+        <td class="small">{{ b.get_category_display }}</td>
+        <td><span class="pill {% if b.condition == 'new' %}pill-ok{% else %}pill-muted{% endif %}">{{ b.get_condition_display }}</span> <span class="pill {% if b.is_softcover %}pill-muted{% else %}pill-info{% endif %}">{{ b.get_format_display }}</span></td>
+        <td class="mono small">{{ b.location|default:"—" }}</td>
+        <td class="num">
+          <div class="row" style="justify-content:flex-end;flex-wrap:nowrap;gap:.3rem">
+            <form class="inline-form" method="post" action="{% url 'inventory:adjust' b.pk %}">{% csrf_token %}<input type="hidden" name="delta" value="-1"><input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-ghost btn-sm" type="submit" aria-label="One fewer">−</button></form>
+            <strong style="min-width:1.5rem;text-align:center">{{ b.quantity }}</strong>
+            <form class="inline-form" method="post" action="{% url 'inventory:adjust' b.pk %}">{% csrf_token %}<input type="hidden" name="delta" value="1"><input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-ghost btn-sm" type="submit" aria-label="One more">+</button></form>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "includes/pagination.html" %}
+  {% else %}
+  <div class="empty">{% icon "shelf" 40 %}<p>No books match. Add your donated books so Shelfpass can suggest them for requests.</p><a class="btn btn-primary" href="{% url 'inventory:create' %}">Add a book</a></div>
+  {% endif %}
+</div>
+{% endblock %}

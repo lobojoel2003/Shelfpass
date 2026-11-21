@@ -1,0 +1,133 @@
+{% extends "base.html" %}{% load shelfpass humanize %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ today|date:"l, F j" }}</div>
+    <h1>Good to see you, {{ user.get_short_name|default:user.username }}</h1>
+    <p>Here's what's waiting at {{ current_org.name }}.</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{% url 'shipping:print_batch' %}?kind=labels" target="_blank" rel="noopener">{% icon "print" %} Labels for everything packed</a>
+    <a class="btn btn-accent" href="{% url 'correspondence:intake' %}">{% icon "plus" %} Log a letter</a>
+  </div>
+</div>
+
+<section class="grid grid-4" aria-label="Summary">
+  <a class="card stat accent" href="{% url 'correspondence:request_list' %}" style="text-decoration:none">
+    <div class="label">{% icon "inbox" 16 %} Letters waiting</div>
+    <div class="value">{{ stats.waiting|intcomma }}</div>
+    <div class="hint">{% if waiting %}Oldest from {{ waiting.0.received_on|days_ago }}{% else %}All caught up{% endif %}</div>
+  </a>
+  <a class="card stat" href="{% url 'shipping:list' %}" style="text-decoration:none;color:inherit">
+    <div class="label">{% icon "package" 16 %} Being packed</div>
+    <div class="value">{{ stats.packing|intcomma }}</div>
+    <div class="hint">{{ stats.shipped_month }} shipped this month</div>
+  </a>
+  <a class="card stat" href="{% url 'shipping:returns' %}" style="text-decoration:none;color:inherit">
+    <div class="label">{% icon "return" 16 %} Return rate (12 mo)</div>
+    <div class="value">{{ stats.return_rate }}%</div>
+    <div class="hint">of {{ stats.shipped_year|intcomma }} packages shipped</div>
+  </a>
+  <a class="card stat" href="{% url 'inventory:list' %}" style="text-decoration:none;color:inherit">
+    <div class="label">{% icon "shelf" 16 %} On the shelf</div>
+    <div class="value">{{ stats.shelf_copies|intcomma }}</div>
+    <div class="hint">{{ stats.shelf_titles|intcomma }} titles in stock</div>
+  </a>
+</section>
+
+<div class="split" style="margin-top:1.5rem">
+  <div class="stack">
+    {% if needs_attention %}
+    <div class="card">
+      <div class="card-head"><h2>{% icon "alert" %} Came back — needs a decision</h2><a href="{% url 'correspondence:request_list' %}?status=returned" class="small">All returned</a></div>
+      <div class="table-wrap"><table class="table">
+        <tbody>
+        {% for r in needs_attention %}
+          <tr>
+            <td><a class="rowlink" href="{{ r.get_absolute_url }}">{{ r.person.name }}</a><span class="sub">{{ r.reference }} · {{ r.facility.name }}</span></td>
+            <td class="num">{% status_pill r.status r.get_status_display %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-head"><h2>Waiting longest</h2><a href="{% url 'correspondence:request_list' %}" class="small">All {{ stats.waiting }} waiting →</a></div>
+      {% if waiting %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Reader</th><th>Facility rules</th><th class="num">Waiting</th></tr></thead>
+        <tbody>
+        {% for r in waiting %}
+          <tr>
+            <td><a class="rowlink" href="{{ r.get_absolute_url }}">{{ r.person.name }}</a><span class="sub">{{ r.reference }} · {{ r.item_count|pluralize_count:"book" }} asked for</span></td>
+            <td><span class="sub" style="color:var(--ink-2)">{{ r.facility.name }}</span><span class="sub">{{ r.facility.ruleset.summary|truncatechars:70 }}</span></td>
+            <td class="num">{% with d=r.received_on|age_days %}<span class="pill {% if d > 60 %}pill-block{% elif d > 30 %}pill-warn{% else %}pill-muted{% endif %}">{{ d }} days</span>{% endwith %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}
+      <div class="empty">{% icon "check" 36 %}<p>No letters waiting. Lovely.</p></div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>On the packing table</h2><a href="{% url 'shipping:list' %}" class="small">All packages →</a></div>
+      {% if packing %}
+      <div class="table-wrap"><table class="table">
+        <tbody>
+        {% for p in packing %}
+          <tr>
+            <td><a class="rowlink" href="{{ p.get_absolute_url }}">{{ p.reference }} · {{ p.person.name }}</a><span class="sub">{{ p.facility.name }}</span></td>
+            <td>{{ p.item_count|pluralize_count:"book" }}</td>
+            <td class="num"><a class="btn btn-sm" href="{% url 'shipping:slip' p.pk %}" target="_blank" rel="noopener">{% icon "print" 15 %} Slip</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}
+      <div class="empty"><p>Nothing being packed right now.</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <aside class="stack">
+    <div class="card">
+      <div class="card-head"><h3>{% icon "building" %} Recent rejections where you ship</h3></div>
+      <div class="card-body">
+        {% if network_returns %}
+        <ul class="timeline">
+          {% for e in network_returns %}
+          <li>
+            <time datetime="{{ e.date|date:'Y-m-d' }}">{% if e.month_only %}{{ e.date|date:"M Y" }}{% else %}{{ e.date|date:"M j" }}{% endif %}</time>
+            <div>
+              <a href="{% url 'facilities:detail' e.facility_slug %}"><strong>{{ e.facility_name }}</strong></a>
+              <div class="small"><span class="pill pill-block">{{ e.reason_label }}</span></div>
+              {% if e.title %}<div class="small muted">“{{ e.title }}”{% if e.format_label %} · {{ e.format_label }}{% endif %}</div>{% endif %}
+              <div class="small muted">{{ e.source }}</div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="muted small">No returns logged in the last 90 days at facilities your group ships to.</p>
+        {% endif %}
+      </div>
+      <div class="card-foot small"><a href="{% url 'facilities:rejections' %}">See the shared rejection data →</a></div>
+    </div>
+    <div class="card"><div class="card-body small">
+      <h3>How Shelfpass works</h3>
+      <ol style="padding-left:1.1rem;margin:0;display:grid;gap:.35rem">
+        <li><strong>Log the letter.</strong> Name, ID, facility and what they asked for.</li>
+        <li><strong>Check the rules.</strong> Shelfpass flags format, condition and limits.</li>
+        <li><strong>Pack from the shelf.</strong> Suggestions skip books they already have.</li>
+        <li><strong>Print and ship.</strong> Slip and label in the facility's format.</li>
+        <li><strong>Log returns.</strong> Every group sees why packages bounce.</li>
+      </ol>
+    </div></div>
+  </aside>
+</div>
+{% endblock %}

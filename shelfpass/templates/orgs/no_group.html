@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}No group yet{% endblock %}
+{% block content %}
+<div class="card" style="max-width:600px;margin:3rem auto"><div class="card-body empty">
+  {% icon "people" 40 %}
+  <h1>You're not in a group yet</h1>
+  <p>Your account works, but no books-to-prisoners group has added you. Ask a coordinator to add <strong>{{ user.username }}</strong> to their team.</p>
+  {% if user.is_superuser %}<p>As an administrator you can create a group in the <a href="{% url 'admin:orgs_organization_add' %}">admin</a>, or run <code>manage.py bootstrap_group</code>.</p>{% endif %}
+  <a class="btn" href="{% url 'facilities:list' %}">Browse facility rules meanwhile</a>
+</div></div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% load static shelfpass %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Shelfpass{% endblock %} · Shelfpass</title>
+  <meta name="description" content="Shelfpass helps books-to-prisoners groups track letters, check facility mail rules and log rejected packages.">
+  <link rel="icon" href="{% static 'shelfpass/logo.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'shelfpass/app.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+<a class="skip" href="#content">Skip to content</a>
+{% with ns=request.resolver_match.namespace url=request.resolver_match.url_name %}
+{% if user.is_authenticated and current_org %}
+<div class="shell">
+  <aside class="sidebar" aria-label="Main navigation">
+    <a class="brand" href="{% url 'core:dashboard' %}">
+      <img src="{% static 'shelfpass/logo.svg' %}" alt="" width="34" height="34">
+      <strong>Shelfpass</strong>
+    </a>
+    <div class="org-switch">
+      {% if user_memberships|length > 1 %}
+      <form method="post" action="{% url 'orgs:switch' %}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <label class="sr-only" for="org-switch">Group</label>
+        <select id="org-switch" name="organization" data-autosubmit>
+          {% for m in user_memberships %}
+          <option value="{{ m.organization_id }}" {% if m.organization_id == current_org.pk %}selected{% endif %}>{{ m.organization.name }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      {% else %}
+      <div class="org-name" title="Your group">{{ current_org.name }}</div>
+      {% endif %}
+    </div>
+    <nav class="nav">
+      <a class="cta" href="{% url 'correspondence:intake' %}" {% if url == 'intake' %}aria-current="page"{% endif %}>{% icon "plus" %} Log a letter</a>
+      <a href="{% url 'core:dashboard' %}" {% if ns == 'core' %}aria-current="page"{% endif %}>{% icon "home" %} Dashboard</a>
+      <a href="{% url 'correspondence:request_list' %}" {% if ns == 'correspondence' and 'request' in url %}aria-current="page"{% endif %}>{% icon "inbox" %} Requests {% if nav_counts.waiting %}<span class="count">{{ nav_counts.waiting }}</span>{% endif %}</a>
+      <a href="{% url 'shipping:list' %}" {% if ns == 'shipping' and url != 'returns' %}aria-current="page"{% endif %}>{% icon "package" %} Packages {% if nav_counts.packing %}<span class="count">{{ nav_counts.packing }}</span>{% endif %}</a>
+      <a href="{% url 'shipping:returns' %}" {% if url == 'returns' %}aria-current="page"{% endif %}>{% icon "return" %} Returns {% if nav_counts.returned %}<span class="count">{{ nav_counts.returned }}</span>{% endif %}</a>
+      <a href="{% url 'correspondence:person_list' %}" {% if ns == 'correspondence' and 'person' in url %}aria-current="page"{% endif %}>{% icon "people" %} People</a>
+      <a href="{% url 'inventory:list' %}" {% if ns == 'inventory' %}aria-current="page"{% endif %}>{% icon "shelf" %} Shelf</a>
+      <div class="nav-label">Shared with every group</div>
+      <a href="{% url 'facilities:list' %}" {% if ns == 'facilities' and url != 'rejections' %}aria-current="page"{% endif %}>{% icon "building" %} Facilities</a>
+      <a href="{% url 'facilities:rejections' %}" {% if url == 'rejections' %}aria-current="page"{% endif %}>{% icon "chart" %} Rejection data</a>
+      <div class="nav-label">{{ current_org.name|truncatechars:28 }}</div>
+      <a href="{% url 'orgs:team' %}" {% if ns == 'orgs' and url != 'settings' %}aria-current="page"{% endif %}>{% icon "people" %} Team</a>
+      {% if is_coordinator %}<a href="{% url 'orgs:settings' %}" {% if url == 'settings' %}aria-current="page"{% endif %}>{% icon "settings" %} Group settings</a>{% endif %}
+    </nav>
+    <div class="sidebar-foot">
+      <div>Signed in as <strong>{{ user.get_short_name|default:user.username }}</strong></div>
+      <div class="row" style="gap:.6rem;margin:.25rem 0 .6rem">
+        <a href="{% url 'password_change' %}">Password</a>
+        {% if user.is_staff %}<a href="{% url 'admin:index' %}">Admin</a>{% endif %}
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out</button></form>
+      </div>
+      <a href="{% url 'version' %}" class="mono" title="Version and build">{{ build.label }}</a>
+    </div>
+  </aside>
+  <main class="main" id="content">
+{% else %}
+<header class="public-top">
+  <a class="brand" href="{% if user.is_authenticated %}{% url 'core:dashboard' %}{% else %}{% url 'facilities:list' %}{% endif %}">
+    <img src="{% static 'shelfpass/logo.svg' %}" alt="" width="34" height="34"><strong>Shelfpass</strong>
+  </a>
+  <nav>
+    <a href="{% url 'facilities:list' %}">Facilities</a>
+    <a href="{% url 'facilities:rejections' %}">Rejection data</a>
+    {% if user.is_authenticated %}
+    <form class="inline-form" method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-sm" type="submit">Log out</button></form>
+    {% else %}
+    <a href="{% url 'login' %}">Volunteer log in</a>
+    {% endif %}
+  </nav>
+</header>
+<main class="public-main" id="content">
+{% endif %}
+  {% include "includes/messages.html" %}
+  {% block content %}{% endblock %}
+{% if user.is_authenticated and current_org %}
+  </main>
+</div>
+{% else %}
+  <p class="footer-note">Shelfpass {{ build.label }} · Facility rules are crowd-maintained under CC BY-SA 4.0 — always double-check with the facility. <a href="{{ dataset_repo_url }}">Contribute</a></p>
+</main>
+{% endif %}
+{% endwith %}
+<script src="{% static 'shelfpass/app.js' %}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

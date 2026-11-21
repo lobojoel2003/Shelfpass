@@ -1,0 +1,35 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Facilities{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="eyebrow">{% icon "building" 15 %} Shared with every group</div><h1>Facilities and mail rules</h1><p>{{ total }} facilit{{ total|pluralize:"y,ies" }} on file. Rules come from the open Shelfpass dataset and volunteers like you.</p></div>
+  {% if current_org %}<div class="actions"><a class="btn" href="{% url 'facilities:create' %}">{% icon "plus" 16 %} Add a facility</a></div>{% endif %}
+</div>
+<form class="filters" method="get">
+  <div class="searchbox">{% icon "search" 16 %}<input type="search" name="q" value="{{ query }}" placeholder="Name or city…" aria-label="Search facilities"></div>
+  <select name="state" aria-label="State"><option value="">All states</option>{% for code, name in states %}<option value="{{ code }}" {% if code == state %}selected{% endif %}>{{ name }}</option>{% endfor %}</select>
+  <select name="kind" aria-label="Type"><option value="">All types</option>{% for v, l in kinds %}<option value="{{ v }}" {% if v == kind %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <label class="check small"><input type="checkbox" name="inactive" value="1" {% if show_inactive %}checked{% endif %}> Include closed</label>
+  <button class="btn" type="submit">Filter</button>
+</form>
+<div class="card">
+  {% if page.object_list %}
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Facility</th><th>Rules</th><th class="num">Rejections (12 mo)</th></tr></thead>
+    <tbody>
+    {% for f in page %}
+      <tr>
+        <td style="min-width:240px"><a class="rowlink" href="{{ f.get_absolute_url }}">{{ f.name }}</a>{% if f.is_sample %} <span class="pill pill-sample">Sample</span>{% endif %}{% if not f.active %} <span class="pill pill-muted">Closed</span>{% endif %}
+          <span class="sub">{{ f.city }}, {{ f.state }} · {{ f.get_kind_display }}{% if f.jurisdiction %} · {{ f.jurisdiction.name }}{% endif %}</span></td>
+        <td>{% include "includes/rule_chips.html" with rules=f.ruleset %}</td>
+        <td class="num">{% if f.recent_rejections %}<span class="pill pill-block">{{ f.recent_rejections }}</span>{% else %}<span class="muted">0</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% include "includes/pagination.html" %}
+  {% else %}
+  <div class="empty">{% icon "building" 40 %}<p>No facilities match.{% if not total %} Load the shared dataset with <code>manage.py sync_dataset</code>.{% endif %}</p></div>
+  {% endif %}
+</div>
+{% endblock %}

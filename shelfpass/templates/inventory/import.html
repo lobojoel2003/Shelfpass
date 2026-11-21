@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Import shelf{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <div class="eyebrow"><a href="{% url 'inventory:list' %}">← Shelf</a></div>
+  <h1>Import books from a spreadsheet</h1>
+  <p>Moving from a spreadsheet? Save it as CSV and upload it here. Matching rows add to existing quantities.</p>
+</div></div>
+<div class="split">
+  <form method="post" enctype="multipart/form-data" class="card">{% csrf_token %}
+    <div class="card-body">{% include "includes/field.html" with field=form.file %}</div>
+    <div class="card-foot row-between"><a href="{% url 'inventory:list' %}">Cancel</a><button class="btn btn-primary" type="submit">{% icon "upload" 16 %} Import</button></div>
+  </form>
+  <aside class="card"><div class="card-body small">
+    <h3>Expected columns</h3>
+    <pre class="json">{{ columns|join:"," }}
+The Hobbit,J.R.R. Tolkien,9780547928227,paperback,used,fantasy,2,A3</pre>
+    <p>Format: paperback, mass-market, hardcover, spiral or other. Condition: new or used. Unknown values fall back to paperback / used / other.</p>
+  </div></aside>
+</div>
+{% endblock %}

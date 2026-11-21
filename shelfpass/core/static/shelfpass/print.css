@@ -1,0 +1,43 @@
+/* Shelfpass — printable packing slips and labels. */
+:root { --ink: #111; --muted: #555; --line: #bbb; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #e9e6df; color: var(--ink); font: 11pt/1.4 "Helvetica Neue", Arial, sans-serif; }
+.toolbar { position: sticky; top: 0; display: flex; gap: .75rem; align-items: center; justify-content: center; padding: .75rem; background: #163f33; color: #fff; font-family: system-ui, sans-serif; z-index: 2; }
+.toolbar button, .toolbar a { font: 600 14px system-ui, sans-serif; padding: .45rem .9rem; border-radius: 8px; border: 0; background: #c8752a; color: #fff; cursor: pointer; text-decoration: none; }
+.toolbar a { background: rgba(255,255,255,.15); }
+.toolbar span { font-size: 13px; opacity: .8; }
+.sheet { background: #fff; margin: 1.25rem auto; box-shadow: 0 2px 12px rgba(0,0,0,.15); }
+.slip { width: 8.5in; min-height: 11in; padding: .6in .7in; }
+.label { width: 6in; height: 4in; padding: .28in .32in; display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+h1 { font-size: 18pt; margin: 0; letter-spacing: .02em; }
+.slip-head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--ink); padding-bottom: .15in; margin-bottom: .2in; }
+.slip-head .meta { text-align: right; font-size: 10pt; }
+.slip-head .meta strong { font-size: 12pt; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: .3in; margin-bottom: .25in; }
+.box-label { font-size: 8pt; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: .04in; font-weight: 700; }
+address { font-style: normal; line-height: 1.35; }
+table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+th { text-align: left; border-bottom: 1.5px solid var(--ink); padding: .05in .06in; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .05em; }
+td { border-bottom: 1px solid var(--line); padding: .07in .06in; vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tfoot td { border-bottom: 0; font-weight: 700; }
+.note { margin-top: .25in; padding: .12in .15in; border: 1px solid var(--line); border-radius: 4px; font-size: 10pt; }
+.small { font-size: 9pt; color: var(--muted); }
+.mono { font-family: Menlo, Consolas, monospace; }
+.from { font-size: 9.5pt; line-height: 1.3; }
+.to { align-self: center; padding-left: 1.1in; font-size: 15pt; line-height: 1.32; }
+.to strong { font-size: 16pt; }
+.label-foot { display: flex; justify-content: space-between; align-items: flex-end; font-size: 9pt; }
+.service { font-size: 14pt; font-weight: 800; letter-spacing: .06em; border: 2.5px solid var(--ink); padding: .03in .12in; }
+.checklist { width: 8.5in; margin: 0 auto 1.25rem; background: #fff8e6; border: 1px dashed #c8752a; padding: .2in .3in; font: 13px/1.5 system-ui, sans-serif; }
+.checklist h2 { font-size: 15px; margin: 0 0 .4rem; }
+.checklist ul { margin: 0; padding-left: 1.2rem; }
+.checklist .block { color: #b42318; font-weight: 600; }
+.empty-batch { text-align: center; padding: 3rem; font-family: system-ui, sans-serif; }
+
+@media print {
+  html, body { background: #fff; }
+  .toolbar, .checklist, .no-print { display: none !important; }
+  .sheet { margin: 0; box-shadow: none; page-break-after: always; break-after: page; }
+  .sheet:last-child { page-break-after: auto; break-after: auto; }
+}

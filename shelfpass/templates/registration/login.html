@@ -1,0 +1,45 @@
+{% load static shelfpass %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in · Shelfpass</title>
+  <link rel="icon" href="{% static 'shelfpass/logo.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'shelfpass/app.css' %}">
+</head>
+<body>
+<div class="auth">
+  <section class="auth-art">
+    <a class="brand" href="{% url 'facilities:list' %}"><img src="{% static 'shelfpass/logo.svg' %}" alt="" width="40" height="40"><strong>Shelfpass</strong></a>
+    <div>
+      <h1>Every book gets through the mailroom.</h1>
+      <p>Log letters from people inside, check each facility's mail rules before you pack, and share what gets rejected so the next group doesn't make the same mistake.</p>
+      <ul>
+        <li>{% icon "check" %} Rule checks: paperback only, no used books, package limits</li>
+        <li>{% icon "check" %} “Already sent” warnings and shelf suggestions</li>
+        <li>{% icon "check" %} Packing slips and labels in the facility's format</li>
+        <li>{% icon "check" %} A shared, public record of rejections</li>
+      </ul>
+    </div>
+    <small>Free software (AGPL-3.0) · {{ build.label }}</small>
+  </section>
+  <section class="auth-form">
+    <div class="card">
+      <div class="card-body">
+        <h2>Volunteer log in</h2>
+        <p class="muted">Ask your group's coordinator for an account.</p>
+        {% if form.non_field_errors %}<ul class="errorlist nonfield">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+        <form method="post" class="stack">
+          {% csrf_token %}
+          {% include "includes/field.html" with field=form.username %}
+          {% include "includes/field.html" with field=form.password %}
+          <input type="hidden" name="next" value="{{ next }}">
+          <button class="btn btn-primary btn-lg" type="submit" style="width:100%">Log in</button>
+        </form>
+      </div>
+      <div class="card-foot small muted">Just looking? <a href="{% url 'facilities:list' %}">Browse facility rules</a> without an account.</div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

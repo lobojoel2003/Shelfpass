@@ -1,0 +1,55 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}{% if creating %}Add a facility{% else %}Edit {{ facility.name }}{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <div class="eyebrow"><a href="{% if facility %}{{ facility.get_absolute_url }}{% else %}{% url 'facilities:list' %}{% endif %}">← {% if facility %}{{ facility.name }}{% else %}Facilities{% endif %}</a></div>
+  <h1>{% if creating %}Add a facility{% else %}Edit {{ facility.name }}{% endif %}</h1>
+  <p>Facilities are shared by every group on this site. Only record rules you have a source for — leave anything you're unsure about as “Unknown”.</p>
+</div></div>
+<form method="post" class="stack" style="max-width:960px">{% csrf_token %}
+  <input type="hidden" name="next" value="{{ next_value }}">
+  {% if form.non_field_errors %}<ul class="errorlist nonfield">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  <section class="card">
+    <div class="card-head"><h2>Facility</h2></div>
+    <div class="card-body form-grid">
+      {% include "includes/field.html" with field=form.name full=True %}
+      {% include "includes/field.html" with field=form.kind %}
+      {% include "includes/field.html" with field=form.jurisdiction %}
+      {% include "includes/field.html" with field=form.street full=True %}
+      {% include "includes/field.html" with field=form.city %}
+      {% include "includes/field.html" with field=form.state %}
+      {% include "includes/field.html" with field=form.postal_code %}
+      {% include "includes/field.html" with field=form.phone %}
+      {% include "includes/field.html" with field=form.website full=True %}
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Book mail rules</h2><span class="small muted">“Unknown / inherit” uses the jurisdiction's rule</span></div>
+    <div class="card-body form-grid">
+      {% include "includes/field.html" with field=form.books_accepted %}
+      {% include "includes/field.html" with field=form.paperback_only %}
+      {% include "includes/field.html" with field=form.new_only %}
+      {% include "includes/field.html" with field=form.hardcover_vendor_only %}
+      {% include "includes/field.html" with field=form.vendor_only %}
+      {% include "includes/field.html" with field=form.invoice_required %}
+      {% include "includes/field.html" with field=form.max_books_per_package %}
+      {% include "includes/field.html" with field=form.max_package_weight_lb %}
+      {% include "includes/field.html" with field=form.approved_vendors %}
+      {% include "includes/field.html" with field=form.recipient_format %}
+      {% include "includes/field.html" with field=form.book_mail_address full=True %}
+      {% include "includes/field.html" with field=form.banned_content full=True %}
+      {% include "includes/field.html" with field=form.banned_titles full=True %}
+      {% include "includes/field.html" with field=form.rule_notes full=True %}
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Where this comes from</h2></div>
+    <div class="card-body form-grid">
+      {% include "includes/field.html" with field=form.source_links full=True %}
+      {% include "includes/field.html" with field=form.last_verified %}
+      {% include "includes/field.html" with field=form.notes full=True %}
+    </div>
+    <div class="card-foot row-between"><a href="{% if facility %}{{ facility.get_absolute_url }}{% else %}{% url 'facilities:list' %}{% endif %}">Cancel</a><button class="btn btn-primary" type="submit">Save facility</button></div>
+  </section>
+</form>
+{% endblock %}

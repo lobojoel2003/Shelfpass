@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% load shelfpass %}
+{% block title %}Not found{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px;margin:3rem auto"><div class="card-body empty">
+  {% icon "search" 40 %}<h1>We couldn't find that page</h1>
+  <p>It may have been moved, or it belongs to another group.</p>
+  <a class="btn" href="/">Back to the dashboard</a>
+</div></div>
+{% endblock %}
