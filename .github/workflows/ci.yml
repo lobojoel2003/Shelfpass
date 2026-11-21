@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
@@ -72,7 +72,7 @@ jobs:
           uv run python manage.py sync_dataset --include-samples
       - name: Build dataset bundle
         run: uv run python scripts/build_dataset_bundle.py --out dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dataset-bundle
           path: dist/*.zip
@@ -104,7 +104,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python }}
@@ -118,7 +118,7 @@ jobs:
         if: always() && hashFiles('coverage.xml') != ''
         run: |
           uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: matrix.python == '3.13' && matrix.database == 'postgres'
         with:
           name: coverage-report
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
@@ -143,7 +143,7 @@ jobs:
           cd /tmp && SHELFPASS_DATASET_DIR="$GITHUB_WORKSPACE/dataset" \
             /tmp/smoke/bin/python -m django check --settings=shelfpass.settings
           /tmp/smoke/bin/python -c "import shelfpass, pathlib; p = pathlib.Path(shelfpass.__file__).parent; assert (p / 'templates/base.html').exists(); assert (p / 'core/static/shelfpass/app.css').exists(); print('wheel OK', shelfpass.__version__)"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: python-dist
           path: dist/
@@ -171,7 +171,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Build metadata
