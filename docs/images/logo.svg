@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Shelfpass">
+  <rect width="64" height="64" rx="14" fill="#1f5f4a"/>
+  <path d="M10 17.5c6.5-2.2 13-1.6 19.5 2.2v28.6c-6.5-3.8-13-4.4-19.5-2.2z" fill="#f6f3ec"/>
+  <path d="M54 17.5c-6.5-2.2-13-1.6-19.5 2.2v28.6c6.5-3.8 13-4.4 19.5-2.2z" fill="#ddd3bf"/>
+  <path d="M14.5 24.3c3.7-.9 7.4-.6 10.8 1M14.5 30c3.7-.9 7.4-.6 10.8 1M14.5 35.7c3.7-.9 7.4-.6 10.8 1" stroke="#1f5f4a" stroke-width="1.7" stroke-linecap="round" fill="none" opacity=".5"/>
+  <circle cx="45.5" cy="44" r="11.5" fill="#c8752a" stroke="#1f5f4a" stroke-width="3.2"/>
+  <path d="M40.2 44.2l3.6 3.6 7.1-7.4" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
