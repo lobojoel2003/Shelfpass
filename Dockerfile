@@ -2,7 +2,7 @@
 # Shelfpass container image: gunicorn + whitenoise, dataset bundled.
 ARG PYTHON_VERSION=3.13
 
-FROM ghcr.io/astral-sh/uv:0.11 AS uv
+FROM ghcr.io/astral-sh/uv:0.13 AS uv
 
 # ----------------------------------------------------------------- build ---
 FROM python:${PYTHON_VERSION}-slim AS build
