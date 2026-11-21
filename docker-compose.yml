@@ -1,0 +1,41 @@
+# Local production-like stack: Postgres + Shelfpass.
+#   cp .env.example .env   # then set SHELFPASS_SECRET_KEY
+#   docker compose up --build
+# Add SHELFPASS_DEMO=1 to .env to load the fictional demo data (login: demo / shelfpass-demo).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: shelfpass
+      POSTGRES_USER: shelfpass
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-shelfpass}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shelfpass -d shelfpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      args:
+        VERSION: ${SHELFPASS_VERSION:-dev}
+    image: ghcr.io/lobojoel2003/shelfpass:${SHELFPASS_TAG:-latest}
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://shelfpass:${POSTGRES_PASSWORD:-shelfpass}@db:5432/shelfpass
+      SHELFPASS_HTTPS: ${SHELFPASS_HTTPS:-0}
+    ports:
+      - "${SHELFPASS_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:

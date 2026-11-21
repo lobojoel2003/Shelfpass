@@ -1,0 +1,4 @@
+include README.md CHANGELOG.md LICENSE manage.py
+recursive-include dataset *
+recursive-include scripts *.py
+recursive-include tests *.py

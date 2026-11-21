@@ -1,0 +1,238 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  SHELFPASS_ALLOW_INSECURE_KEY: "1"
+  SHELFPASS_HTTPS: "0"
+  UV_LOCKED: "1"
+  FORCE_COLOR: "1"
+
+jobs:
+  lint:
+    name: Lint & Django checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - name: Install
+        run: uv sync --all-groups
+      - name: Ruff lint
+        run: uv run ruff check --output-format=github .
+      - name: Ruff format
+        run: uv run ruff format --check --diff .
+      - name: Migrations are up to date
+        run: uv run python manage.py makemigrations --check --dry-run
+      - name: Production settings pass `check --deploy`
+        env:
+          SHELFPASS_ALLOW_INSECURE_KEY: ""
+          SHELFPASS_SECRET_KEY: ci-only-${{ github.run_id }}-a-long-random-looking-secret-key-value
+          SHELFPASS_HTTPS: "1"
+          SHELFPASS_SSL_REDIRECT: "1"
+          SHELFPASS_HSTS_SECONDS: "31536000"
+          SHELFPASS_HSTS_PRELOAD: "1"
+        run: uv run python manage.py check --deploy --fail-level WARNING
+      - name: Version metadata is consistent
+        run: |
+          version=$(uv run python -c 'import shelfpass; print(shelfpass.__version__)')
+          uv run python scripts/check_version.py "v${version}"
+
+  dataset:
+    name: Validate open dataset
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - run: uv sync --no-dev
+      - name: Schema and cross-reference checks
+        run: uv run python manage.py sync_dataset --check
+      - name: Import into a throwaway database
+        run: |
+          uv run python manage.py migrate --noinput -v 0
+          uv run python manage.py sync_dataset --include-samples
+      - name: Build dataset bundle
+        run: uv run python scripts/build_dataset_bundle.py --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dataset-bundle
+          path: dist/*.zip
+          retention-days: 14
+
+  test:
+    name: Tests (Python ${{ matrix.python }}, ${{ matrix.database }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13"]
+        database: [postgres]
+        include:
+          - python: "3.13"
+            database: sqlite
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shelfpass
+          POSTGRES_PASSWORD: shelfpass
+          POSTGRES_DB: shelfpass
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U shelfpass"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv sync --all-groups
+      - name: Run test suite
+        env:
+          DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgres://shelfpass:shelfpass@localhost:5432/shelfpass' || '' }}
+        run: uv run pytest --cov --cov-report=xml --cov-report=term -p no:cacheprovider
+      - name: Coverage summary
+        if: always() && hashFiles('coverage.xml') != ''
+        run: |
+          uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: matrix.python == '3.13' && matrix.database == 'postgres'
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14
+
+  package:
+    name: Build Python package
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.13"
+      - name: Build sdist and wheel
+        run: uv build
+      - name: Install the wheel into a clean venv and smoke-test it
+        run: |
+          uv venv /tmp/smoke
+          uv pip install --python /tmp/smoke/bin/python dist/*.whl
+          cd /tmp && SHELFPASS_DATASET_DIR="$GITHUB_WORKSPACE/dataset" \
+            /tmp/smoke/bin/python -m django check --settings=shelfpass.settings
+          /tmp/smoke/bin/python -c "import shelfpass, pathlib; p = pathlib.Path(shelfpass.__file__).parent; assert (p / 'templates/base.html').exists(); assert (p / 'core/static/shelfpass/app.css').exists(); print('wheel OK', shelfpass.__version__)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+          retention-days: 14
+
+  docker:
+    name: Container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [lint, test]
+    permissions:
+      contents: read
+      packages: write
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: shelfpass
+          POSTGRES_PASSWORD: shelfpass
+          POSTGRES_DB: shelfpass
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U shelfpass"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Build metadata
+        id: meta
+        run: |
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "version=$(grep -oP '__version__ = "\K[^"]+' shelfpass/__init__.py)" >> "$GITHUB_OUTPUT"
+          echo "build=$(git rev-list --count HEAD)" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: shelfpass:ci
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            BUILD_NUMBER=${{ steps.meta.outputs.build }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_DATE=${{ steps.meta.outputs.date }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test (migrate, sync dataset, demo data, health check)
+        run: |
+          docker run -d --name shelfpass --network host \
+            -e DATABASE_URL=postgres://shelfpass:shelfpass@127.0.0.1:5432/shelfpass \
+            -e SHELFPASS_SECRET_KEY=smoke-test-secret-key-that-is-long-enough-for-django \
+            -e SHELFPASS_HTTPS=0 -e SHELFPASS_DEMO=1 \
+            shelfpass:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/healthz > health.json; then break; fi
+            sleep 2
+          done
+          docker logs shelfpass
+          cat health.json
+          python3 - <<'PY'
+          import json
+          h = json.load(open("health.json"))
+          assert h["status"] == "ok" and h["database"] == "ok", h
+          assert h["version"] == "${{ steps.meta.outputs.version }}", h
+          assert h["build_number"] == "${{ steps.meta.outputs.build }}", h
+          print("Container healthy:", h["label"])
+          PY
+          curl -fsS -o /dev/null http://127.0.0.1:8000/facilities/
+          curl -fsS http://127.0.0.1:8000/static/shelfpass/app.css -o /dev/null
+          docker exec shelfpass python manage.py sync_dataset --check
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish edge image from main
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          image=${{ steps.meta.outputs.image }}
+          for tag in edge "sha-${{ steps.meta.outputs.short_sha }}" "${{ steps.meta.outputs.version }}-build.${{ steps.meta.outputs.build }}"; do
+            docker tag shelfpass:ci "$image:$tag"
+            docker push "$image:$tag"
+          done
+          echo "Published \`$image:edge\` (build ${{ steps.meta.outputs.build }})" >> "$GITHUB_STEP_SUMMARY"

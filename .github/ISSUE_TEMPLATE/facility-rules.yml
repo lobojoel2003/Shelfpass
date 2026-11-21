@@ -1,0 +1,31 @@
+name: Facility rules correction
+description: A facility's book rules are wrong, missing or out of date.
+title: "[Facility] "
+labels: [dataset]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping every books-to-prisoners group. **Never include names or ID numbers of incarcerated people.**
+        If you're comfortable with GitHub, the facility page's *Suggest a correction* button opens a ready-made pull request instead.
+  - type: input
+    id: facility
+    attributes:
+      label: Facility
+      description: Name, city and state (or the dataset id, e.g. `pa-example-sci`).
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: What the rules actually are
+      placeholder: "Paperback only, new books only, max 3 per package, invoice required…"
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source
+      description: Link to the policy, or describe the letter / return slip and when you received it.
+    validations:
+      required: true
