@@ -218,3 +218,20 @@ def test_recipient_format():
 def test_title_key():
     assert title_key("Dune", isbn="0-306-40615-2") == "isbn:9780306406157"
     assert title_key("The Hobbit", "J.R.R. Tolkien; Other") == "title:hobbit|j r r tolkien"
+
+
+def test_empty_database_url_falls_back_to_sqlite():
+    import os
+    import subprocess
+    import sys
+
+    code = "from django.conf import settings; print(settings.DATABASES['default']['ENGINE'])"
+    env = {**os.environ, "DATABASE_URL": "", "DJANGO_SETTINGS_MODULE": "tests.settings"}
+    out = subprocess.run(  # noqa: S603 - fixed argv, test only
+        [sys.executable, "-c", f"import django; django.setup(); {code}"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert out.stdout.strip() == "django.db.backends.sqlite3"
