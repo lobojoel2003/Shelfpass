@@ -7,7 +7,9 @@ name: Release
 #   4. builds and pushes a multi-arch container image to GHCR
 #   5. creates the GitHub Release with notes from CHANGELOG.md and checksums
 #
-# It can also be started by hand for an existing tag (Actions → Release → Run workflow).
+# It can also be started by hand (Actions → Release → Run workflow): give a
+# tag such as v1.0.0. If the tag doesn't exist yet it is created, annotated,
+# on the commit the workflow runs from; an existing tag is re-published.
 
 on:
   push:
@@ -15,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to (re)publish, e.g. v1.0.0
+        description: Tag to publish, e.g. v1.0.0 (created from the selected branch if missing)
         required: true
 
 permissions:
@@ -29,8 +31,32 @@ env:
   TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
+  tag:
+    name: Ensure tag exists
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Create the tag for manual runs
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" > /dev/null; then
+            echo "Tag ${TAG} already exists; re-publishing it."
+            exit 0
+          fi
+          python3 scripts/check_version.py "$TAG"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Shelfpass ${TAG}" "$GITHUB_SHA"
+          git push origin "refs/tags/${TAG}"
+          echo "Created tag \`${TAG}\` on \`${GITHUB_SHA::7}\`" >> "$GITHUB_STEP_SUMMARY"
+
   verify:
     name: Verify version
+    needs: tag
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.v.outputs.version }}

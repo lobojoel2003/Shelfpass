@@ -43,7 +43,7 @@ The [Release workflow](../.github/workflows/release.yml) then:
 5. creates the GitHub Release with the changelog section as notes, an install snippet, build
    metadata and `SHA256SUMS.txt`.
 
-To re-run a release for an existing tag, use **Actions → Release → Run workflow** and enter the tag. Assets are replaced in place.
+You can also publish without pushing a tag yourself. Open **Actions → Release → Run workflow**, choose `main` and enter the tag (for example `v1.0.0`). If the tag doesn't exist yet, the workflow creates it as an annotated tag on that commit after checking it against `__version__` and the changelog, then carries on as above. If the tag already exists, the release is re-published and its assets are replaced in place.
 
 ## Verifying an image
 
