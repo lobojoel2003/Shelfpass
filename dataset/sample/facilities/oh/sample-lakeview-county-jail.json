@@ -1,0 +1,16 @@
+{
+  "id": "sample-lakeview-county-jail",
+  "name": "Lakeview County Jail",
+  "kind": "county-jail",
+  "sample": true,
+  "address": { "street": ["55 Courthouse Square"], "city": "Lakeview", "state": "OH", "postal_code": "00007" },
+  "rules": {
+    "paperback_only": true,
+    "vendor_only": true,
+    "approved_vendors": ["The publisher", "An online bookseller shipping new books"],
+    "max_books_per_package": 3,
+    "notes": ["Donated books from volunteer programs are refused. Order new paperbacks shipped directly to the jail."]
+  },
+  "sources": [{ "title": "Fictional record written for the Shelfpass demo" }],
+  "last_verified": "2026-10-15"
+}

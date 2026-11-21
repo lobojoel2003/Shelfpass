@@ -1,0 +1,10 @@
+{
+  "id": "sample-old-mill-detention",
+  "name": "Old Mill Detention Center",
+  "kind": "county-jail",
+  "sample": true,
+  "active": false,
+  "address": { "street": ["12 Mill Street"], "city": "Old Mill", "state": "PA", "postal_code": "00004" },
+  "notes": "Fictional facility that has closed, to show how retired facilities look.",
+  "sources": [{ "title": "Fictional record written for the Shelfpass demo" }]
+}

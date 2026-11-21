@@ -1,0 +1,16 @@
+{
+  "reporter": "Sample Books Program (fictional)",
+  "license": "CC-BY-SA-4.0",
+  "reports": [
+    { "facility": "sample-cedar-hollow-sci", "month": "2026-10", "reason": "hardcover", "book": { "title": "A Game of Thrones", "authors": "George R. R. Martin", "format": "hardcover", "condition": "used" }, "detail": "Stamped: HARDCOVER NOT PERMITTED" },
+    { "facility": "sample-cedar-hollow-sci", "month": "2026-09", "reason": "used-book", "book": { "title": "Merriam-Webster's Collegiate Dictionary", "format": "paperback", "condition": "used" } },
+    { "facility": "sample-cedar-hollow-sci", "month": "2026-08", "reason": "refused-no-reason", "detail": "REFUSED — no reason given" },
+    { "facility": "sample-riverbend-cf", "month": "2026-09", "reason": "no-invoice" },
+    { "facility": "sample-riverbend-cf", "month": "2026-06", "reason": "content", "book": { "title": "Rand McNally Road Atlas", "format": "paperback", "condition": "new" }, "detail": "Maps not permitted" },
+    { "facility": "sample-pine-ridge-wcc", "month": "2026-10", "reason": "content", "book": { "title": "The New Jim Crow", "authors": "Michelle Alexander", "format": "paperback", "condition": "used" }, "detail": "Publication denied — on restricted list" },
+    { "facility": "sample-pine-ridge-wcc", "month": "2026-07", "reason": "packaging", "detail": "Housing unit missing from label" },
+    { "facility": "sample-lakeview-county-jail", "month": "2026-10", "reason": "unauthorized-sender", "detail": "UNAUTHORIZED SENDER" },
+    { "facility": "sample-lakeview-county-jail", "month": "2026-08", "reason": "unauthorized-sender" },
+    { "facility": "sample-high-desert-fpc", "month": "2026-05", "reason": "no-response" }
+  ]
+}

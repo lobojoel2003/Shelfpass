@@ -1,0 +1,15 @@
+{
+  "id": "sample-high-desert-fpc",
+  "name": "High Desert Federal Prison Camp",
+  "kind": "federal-prison",
+  "jurisdiction": "us-bop",
+  "sample": true,
+  "address": { "street": ["PO Box 3000"], "city": "Sagebrush", "state": "NV", "postal_code": "00006" },
+  "rules": {
+    "max_books_per_package": 5,
+    "notes": ["Sample local supplement: softcover books from individuals are accepted; hardcovers only from the publisher or a bookstore."]
+  },
+  "notes": "Fictional federal camp used to show how facilities inherit federal rules.",
+  "sources": [{ "title": "Fictional record written for the Shelfpass demo" }],
+  "last_verified": "2026-07-30"
+}

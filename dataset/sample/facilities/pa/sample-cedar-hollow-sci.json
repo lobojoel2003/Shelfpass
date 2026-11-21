@@ -1,0 +1,29 @@
+{
+  "id": "sample-cedar-hollow-sci",
+  "name": "Cedar Hollow State Correctional Institution",
+  "kind": "state-prison",
+  "jurisdiction": "sample-northfield-doc",
+  "sample": true,
+  "address": {
+    "street": [
+      "1 Cedar Hollow Road"
+    ],
+    "city": "Cedar Hollow",
+    "state": "PA",
+    "postal_code": "00002"
+  },
+  "rules": {
+    "new_only": true,
+    "notes": [
+      "Cedar Hollow refuses used books under a local supplement.",
+      "Write the ID number on the outside of the package, not just the label."
+    ]
+  },
+  "notes": "Fictional facility. Mail rules follow the Northfield DOC sample policy.",
+  "sources": [
+    {
+      "title": "Fictional record written for the Shelfpass demo"
+    }
+  ],
+  "last_verified": "2026-10-01"
+}

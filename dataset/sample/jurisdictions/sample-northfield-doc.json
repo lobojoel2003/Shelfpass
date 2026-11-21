@@ -1,0 +1,33 @@
+{
+  "id": "sample-northfield-doc",
+  "name": "Northfield Department of Corrections (sample)",
+  "kind": "state",
+  "state": "PA",
+  "sample": true,
+  "rules": {
+    "paperback_only": true,
+    "invoice_required": true,
+    "max_books_per_package": 3,
+    "banned_content": [
+      "sexually-explicit",
+      "maps-travel",
+      "weapons-violence"
+    ],
+    "notes": [
+      "All book packages are screened at the central processing center. Allow 6–8 weeks.",
+      "No stickers, bookmarks, highlighting or loose inserts."
+    ],
+    "recipient_format": "{name} #{id}",
+    "book_mail_address": [
+      "Northfield DOC Book Processing Center",
+      "PO Box 1000",
+      "Harrow, PA 00001"
+    ]
+  },
+  "sources": [
+    {
+      "title": "Fictional policy written for the Shelfpass demo"
+    }
+  ],
+  "last_verified": "2026-10-01"
+}

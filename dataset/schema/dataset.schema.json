@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/lobojoel2003/Shelfpass/blob/main/dataset/schema/dataset.schema.json",
+  "title": "Shelfpass facility-rules dataset",
+  "description": "Schemas for every file in the Shelfpass open dataset. Each file validates against one of the $defs: jurisdictions/*.json -> jurisdiction, facilities/<state>/*.json -> facility, rejections/*.json -> rejections.",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "minLength": 3,
+      "maxLength": 110,
+      "not": { "pattern": "^local-" },
+      "description": "Stable lowercase slug. Never change it once published; the prefix local- is reserved for records created inside an app instance."
+    },
+    "state": {
+      "type": "string",
+      "enum": ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "PR", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+    },
+    "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "format": "date" },
+    "source": {
+      "type": "object",
+      "description": "Where a rule comes from: an official policy, a facility letter, a returned-package slip.",
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "url": { "type": "string", "pattern": "^https?://", "maxLength": 1000 },
+        "accessed": { "$ref": "#/$defs/date" },
+        "note": { "type": "string", "maxLength": 500 }
+      },
+      "anyOf": [{ "required": ["url"] }, { "required": ["title"] }]
+    },
+    "content_category": {
+      "type": "string",
+      "enum": ["sexually-explicit", "weapons-violence", "drug-manufacture", "escape-security", "gang-related", "hate", "maps-travel", "martial-arts", "tattoo", "role-playing-games", "technology", "true-crime", "other"]
+    },
+    "rejection_reason": {
+      "type": "string",
+      "enum": ["refused-no-reason", "unauthorized-sender", "hardcover", "used-book", "no-invoice", "content", "too-many-items", "markings", "packaging", "recipient-moved", "recipient-unknown", "no-response", "other"]
+    },
+    "book_format": { "type": "string", "enum": ["paperback", "mass-market", "hardcover", "spiral", "other"] },
+    "book_condition": { "type": "string", "enum": ["new", "used"] },
+    "line_list": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 500 },
+      "uniqueItems": true
+    },
+    "rules": {
+      "type": "object",
+      "description": "Book mail rules. Omit anything you don't know; facility rules override their jurisdiction's.",
+      "additionalProperties": false,
+      "properties": {
+        "books_accepted": { "type": "boolean", "description": "false if the facility refuses all book packages." },
+        "paperback_only": { "type": "boolean", "description": "No hardcover or spiral-bound books." },
+        "new_only": { "type": "boolean", "description": "Used books are refused." },
+        "vendor_only": { "type": "boolean", "description": "Books must ship directly from a publisher or approved vendor." },
+        "hardcover_vendor_only": { "type": "boolean", "description": "Hardcovers must ship from a publisher, bookstore or book club." },
+        "approved_vendors": { "$ref": "#/$defs/line_list" },
+        "invoice_required": { "type": "boolean", "description": "An invoice or receipt must be enclosed." },
+        "max_books_per_package": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "max_package_weight_lb": { "type": "number", "exclusiveMinimum": 0, "maximum": 100 },
+        "banned_content": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/content_category" },
+          "uniqueItems": true
+        },
+        "banned_titles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["title"],
+            "properties": {
+              "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+              "author": { "type": "string", "maxLength": 300 },
+              "isbn": { "type": "string", "pattern": "^(\\d{9}[\\dX]|\\d{13})$" },
+              "note": { "type": "string", "maxLength": 300 }
+            }
+          }
+        },
+        "notes": { "$ref": "#/$defs/line_list" },
+        "recipient_format": {
+          "type": "string",
+          "maxLength": 120,
+          "pattern": "^([^{}]|\\{(name|id|housing)\\})*$",
+          "description": "How to write the recipient line. Placeholders: {name}, {id}, {housing}."
+        },
+        "book_mail_address": {
+          "type": "array",
+          "description": "Central processing address for books, when different from the facility. One line per item.",
+          "items": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "minItems": 2,
+          "maxItems": 6
+        }
+      }
+    },
+    "jurisdiction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "kind": { "type": "string", "enum": ["federal", "state", "county", "other"] },
+        "state": { "$ref": "#/$defs/state" },
+        "rules": { "$ref": "#/$defs/rules" },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+        "last_verified": { "$ref": "#/$defs/date" },
+        "sample": { "type": "boolean" }
+      }
+    },
+    "facility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "kind", "address"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "kind": {
+          "type": "string",
+          "enum": ["state-prison", "federal-prison", "county-jail", "immigration-detention", "juvenile", "private-prison", "other"]
+        },
+        "jurisdiction": { "$ref": "#/$defs/id" },
+        "address": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["street", "city", "state", "postal_code"],
+          "properties": {
+            "street": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 200 }, "minItems": 1, "maxItems": 4 },
+            "city": { "type": "string", "minLength": 2, "maxLength": 100 },
+            "state": { "$ref": "#/$defs/state" },
+            "postal_code": { "type": "string", "pattern": "^\\d{5}(-\\d{4})?$" }
+          }
+        },
+        "phone": { "type": "string", "maxLength": 40 },
+        "website": { "type": "string", "pattern": "^https?://", "maxLength": 500 },
+        "rules": { "$ref": "#/$defs/rules" },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+        "last_verified": { "$ref": "#/$defs/date" },
+        "active": { "type": "boolean", "description": "false once the facility has closed." },
+        "sample": { "type": "boolean" }
+      }
+    },
+    "rejection_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["facility", "month", "reason"],
+      "properties": {
+        "facility": { "$ref": "#/$defs/id" },
+        "month": { "type": "string", "pattern": "^\\d{4}-(0[1-9]|1[0-2])$" },
+        "reason": { "$ref": "#/$defs/rejection_reason" },
+        "book": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["title"],
+          "properties": {
+            "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+            "authors": { "type": "string", "maxLength": 300 },
+            "isbn": { "type": "string", "pattern": "^(\\d{9}[\\dX]|\\d{13})$" },
+            "format": { "$ref": "#/$defs/book_format" },
+            "condition": { "$ref": "#/$defs/book_condition" }
+          }
+        },
+        "detail": { "type": "string", "maxLength": 500, "description": "What the return slip said. Never include names or ID numbers." }
+      }
+    },
+    "rejections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reports"],
+      "properties": {
+        "reporter": { "type": "string", "maxLength": 200, "description": "Group or project contributing the reports (optional)." },
+        "license": { "const": "CC-BY-SA-4.0" },
+        "generated": { "type": "string" },
+        "reports": { "type": "array", "items": { "$ref": "#/$defs/rejection_report" } }
+      }
+    }
+  }
+}

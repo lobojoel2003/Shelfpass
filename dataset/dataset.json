@@ -1,0 +1,8 @@
+{
+  "name": "Shelfpass facility mail rules",
+  "description": "Crowd-maintained book mail rules for US prisons and jails, plus anonymised reports of rejected book packages.",
+  "version": "2026.11.0",
+  "license": "CC-BY-SA-4.0",
+  "homepage": "https://github.com/lobojoel2003/Shelfpass/tree/main/dataset",
+  "schema": "schema/dataset.schema.json"
+}

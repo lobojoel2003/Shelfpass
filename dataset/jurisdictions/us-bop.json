@@ -1,0 +1,19 @@
+{
+  "id": "us-bop",
+  "name": "Federal Bureau of Prisons",
+  "kind": "federal",
+  "rules": {
+    "hardcover_vendor_only": true,
+    "notes": [
+      "Under 28 CFR 540.71, hardcover publications may only come directly from the publisher, a book club or a bookstore.",
+      "Many institutions add local rules (for example requiring softcovers from a publisher too). Check the institution's own mail policy before shipping."
+    ],
+    "recipient_format": "{name} #{id}"
+  },
+  "sources": [
+    {
+      "title": "28 CFR 540.71 — Procedures (Incoming Publications)",
+      "url": "https://www.ecfr.gov/current/title-28/chapter-V/subchapter-C/part-540/subpart-F/section-540.71"
+    }
+  ]
+}

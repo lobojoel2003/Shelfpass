@@ -1,0 +1,14 @@
+{
+  "id": "sample-riverbend-cf",
+  "name": "Riverbend Correctional Facility",
+  "kind": "state-prison",
+  "jurisdiction": "sample-northfield-doc",
+  "sample": true,
+  "address": { "street": ["400 Riverbend Drive"], "city": "Lower Bend", "state": "PA", "postal_code": "00003" },
+  "rules": {
+    "max_books_per_package": 5,
+    "notes": ["Riverbend allows five books per package under a local supplement."]
+  },
+  "sources": [{ "title": "Fictional record written for the Shelfpass demo" }],
+  "last_verified": "2026-08-20"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "sample-pine-ridge-wcc",
+  "name": "Pine Ridge Women's Correctional Center",
+  "kind": "state-prison",
+  "jurisdiction": "sample-southland-doc",
+  "sample": true,
+  "address": { "street": ["PO Box 77", "2200 Pine Ridge Parkway"], "city": "Pine Ridge", "state": "GA", "postal_code": "00005" },
+  "rules": {
+    "notes": ["Include the housing unit on the recipient line or the package is returned."]
+  },
+  "sources": [{ "title": "Fictional record written for the Shelfpass demo" }],
+  "last_verified": "2026-09-12"
+}
